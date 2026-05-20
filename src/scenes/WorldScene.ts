@@ -123,6 +123,14 @@ export class WorldScene extends Phaser.Scene {
 
   getState(): GameState { return this.state; }
 
+  bumpMotivation(delta: number): GameState {
+    const next = { ...this.state, motivation: Math.max(0, this.state.motivation + delta) };
+    this.state = next;
+    this.registry.set('state', next);
+    saveState(next);
+    return next;
+  }
+
   setDebugVisible(on: boolean): void {
     this.debugVisible = on;
     this.debugLayer.setVisible(on);

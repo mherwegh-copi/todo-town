@@ -13,7 +13,6 @@ import {
 } from './systems/todoStore';
 import { newTodo } from './domain/todo';
 import type { Todo } from './domain/todo';
-import { loadState, saveState } from './systems/save';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -32,14 +31,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function bumpMotivation(delta: number): void {
-  const state = loadState();
-  if (!state) return;
-  const next = { ...state, motivation: Math.max(0, state.motivation + delta) };
-  saveState(next);
   const world = game.scene.getScene('WorldScene') as WorldScene | null;
-  if (world) {
-    world.registry.set('state', next);
+  if (!world || !world.scene.isActive()) {
+    console.warn('bumpMotivation: WorldScene not ready, skipping');
+    return;
   }
+  world.bumpMotivation(delta);
 }
 
 function emitTodoCompleted(): void {
