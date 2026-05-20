@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ClockWidget } from '../ui/ClockWidget';
 import { ActionButton } from '../ui/ActionButton';
 import { CardOverlay } from '../ui/CardOverlay';
+import { Tooltip } from '../ui/Tooltip';
 import { drawCards, applyChosenCard, isActionAvailable } from '../systems/dailyAction';
 import { GameState } from '../domain/state';
 import { WorldScene } from './WorldScene';
@@ -20,6 +21,18 @@ export class UIScene extends Phaser.Scene {
       onPick: (id) => this.pickCard(id),
       onCancel: () => this.overlay.hide(),
     });
+
+    const tooltip = new Tooltip(this);
+    const world = this.scene.get('WorldScene') as WorldScene;
+    world.events.on('hover-building', (id: string) => {
+      const s = world.getState();
+      const b = s.world.buildings.find((bb) => bb.id === id);
+      if (!b) return;
+      const occupants = s.world.villagers.filter((v) => v.homeId === id || v.workplaceId === id);
+      const lines = [`${b.kind}`, `occupants: ${occupants.map((v) => v.name).join(', ') || '—'}`];
+      tooltip.show(lines.join('\n'));
+    });
+    world.events.on('hover-clear', () => tooltip.hide());
   }
 
   update(): void {
