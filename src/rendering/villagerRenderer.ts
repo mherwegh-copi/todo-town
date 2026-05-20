@@ -4,7 +4,9 @@ import { TILE_SIZE } from '../config';
 import { villagerActivityAt } from '../systems/villagerAI';
 import { BUILDING_FOOTPRINT } from '../domain/building';
 import { hourOfDay } from '../systems/clock';
-import { TT_SHEET, villagerFrame } from './frames';
+import { blockyKey } from './frames';
+
+const VILLAGER_DISPLAY_PX = 24;
 
 export type VillagerSpritesMap = Map<string, Phaser.GameObjects.Image>;
 
@@ -96,7 +98,8 @@ export function ensureVillagerSprites(
   }
   for (const v of state.world.villagers) {
     if (!sprites.has(v.id)) {
-      const img = scene.add.image(0, 0, TT_SHEET, villagerFrame(v.spriteVariant)).setOrigin(0.5, 1);
+      const img = scene.add.image(0, 0, blockyKey(v.spriteVariant)).setOrigin(0.5, 1);
+      img.setDisplaySize(VILLAGER_DISPLAY_PX, VILLAGER_DISPLAY_PX);
       container.add(img);
       sprites.set(v.id, img);
     }

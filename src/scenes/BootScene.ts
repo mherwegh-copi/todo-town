@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TT_SHEET, TT_FRAME_SIZE } from '../rendering/frames';
+import { TT_SHEET, TT_FRAME_SIZE, BLOCKY_KEYS, blockyAssetPath } from '../rendering/frames';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -11,6 +11,9 @@ export class BootScene extends Phaser.Scene {
       frameWidth: TT_FRAME_SIZE,
       frameHeight: TT_FRAME_SIZE,
     });
+    for (const key of BLOCKY_KEYS) {
+      this.load.image(key, blockyAssetPath(key));
+    }
   }
 
   create(): void {

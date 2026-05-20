@@ -86,3 +86,16 @@ export function villagerFrame(variant: number): number {
   const arr = FRAME.villager;
   return arr[((variant % arr.length) + arr.length) % arr.length]!;
 }
+
+const BLOCKY_LETTERS = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r'] as const;
+export const BLOCKY_KEYS = BLOCKY_LETTERS.map((l) => `blocky-${l}`);
+
+export function blockyAssetPath(key: string): string {
+  const letter = key.replace('blocky-', '');
+  return `/assets/blocky/character-${letter}.png`;
+}
+
+export function blockyKey(variant: number): string {
+  const i = ((variant % BLOCKY_KEYS.length) + BLOCKY_KEYS.length) % BLOCKY_KEYS.length;
+  return BLOCKY_KEYS[i]!;
+}
