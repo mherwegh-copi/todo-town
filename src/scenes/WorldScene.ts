@@ -91,6 +91,7 @@ export class WorldScene extends Phaser.Scene {
     });
 
     this.registry.set('state', this.state);
+    this.events.on('todo-completed', () => this.celebrateRandomVillager());
   }
 
   update(time: number): void {
@@ -178,4 +179,22 @@ export class WorldScene extends Phaser.Scene {
   }
 
   isDebugVisible(): boolean { return this.debugVisible; }
+
+  private celebrateRandomVillager(): void {
+    const sprites: Phaser.GameObjects.Image[] = [];
+    for (const s of this.villagerSprites.values()) {
+      if (s.visible) sprites.push(s);
+    }
+    if (sprites.length === 0) return;
+    const sprite = sprites[Math.floor(Math.random() * sprites.length)]!;
+    const baseY = sprite.y;
+    this.tweens.add({
+      targets: sprite,
+      y: baseY - 8,
+      duration: 200,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+      onComplete: () => { sprite.y = baseY; },
+    });
+  }
 }
