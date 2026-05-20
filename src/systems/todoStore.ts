@@ -59,9 +59,14 @@ export function loadTodos(): readonly Todo[] {
   const raw = localStorage.getItem(TODO_STORAGE_KEY);
   if (!raw) return [];
   try {
-    const parsed = JSON.parse(raw) as Todo[];
+    const parsed = JSON.parse(raw) as Array<
+      Omit<Todo, 'updatedAt'> & { updatedAt?: number }
+    >;
     if (!Array.isArray(parsed)) return [];
-    return parsed;
+    return parsed.map((t) => ({
+      ...t,
+      updatedAt: t.updatedAt ?? t.createdAt,
+    }));
   } catch {
     return [];
   }

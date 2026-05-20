@@ -103,4 +103,11 @@ describe('todoStore persistence', () => {
     localStorage.setItem('village-todos', 'not-json');
     expect(loadTodos()).toEqual([]);
   });
+
+  it('loadTodos backfills updatedAt for legacy todos', () => {
+    const legacy = [{ id: 'x', text: 'old', done: false, createdAt: 55 }];
+    localStorage.setItem('village-todos', JSON.stringify(legacy));
+    const loaded = loadTodos();
+    expect(loaded[0]!.updatedAt).toBe(55);
+  });
 });
