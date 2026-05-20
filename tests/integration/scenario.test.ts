@@ -19,7 +19,9 @@ describe('30-day scenario', () => {
       }
     }
     expect(s.progression.day).toBeGreaterThanOrEqual(29);
-    const homeIds = new Set(s.world.buildings.filter((b) => b.kind === 'house').map((b) => b.id));
+    const homeIds = new Set(
+      s.world.buildings.filter((b) => b.kind === 'house' || b.kind === 'townHall').map((b) => b.id),
+    );
     for (const v of s.world.villagers) {
       expect(homeIds.has(v.homeId)).toBe(true);
     }

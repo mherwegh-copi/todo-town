@@ -2,6 +2,13 @@ import Phaser from 'phaser';
 import { seasonForDay } from '../systems/season';
 import { dayIndex } from '../systems/clock';
 
+const SEASON_LABEL_FR: Record<string, string> = {
+  spring: 'printemps',
+  summer: 'été',
+  autumn: 'automne',
+  winter: 'hiver',
+};
+
 export class ClockWidget {
   private text: Phaser.GameObjects.Text;
 
@@ -21,6 +28,6 @@ export class ClockWidget {
     const mm = String(d.getMinutes()).padStart(2, '0');
     const day = dayIndex(createdAt, now);
     const season = seasonForDay(day);
-    this.text.setText(`${hh}:${mm}  •  jour ${day}  •  ${season}`);
+    this.text.setText(`${hh}:${mm}  •  jour ${day}  •  ${SEASON_LABEL_FR[season] ?? season}`);
   }
 }

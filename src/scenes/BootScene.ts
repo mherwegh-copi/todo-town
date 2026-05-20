@@ -20,6 +20,8 @@ export class BootScene extends Phaser.Scene {
   private createPlaceholderTextures(): void {
     const palette: Record<string, number> = {
       grass: 0x6abe30,
+      grass2: 0x5fae28,
+      grass3: 0x78c93c,
       dirt: 0x9c6b3c,
       water: 0x4a90c2,
       path: 0xd0b270,
