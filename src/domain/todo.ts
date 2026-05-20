@@ -3,6 +3,7 @@ export type Todo = {
   readonly text: string;
   readonly done: boolean;
   readonly createdAt: number;
+  readonly updatedAt: number;
 };
 
 let counter = 0;
@@ -16,5 +17,6 @@ export function newTodo(text: string, now: number): Todo {
     text: trimmed,
     done: false,
     createdAt: now,
+    updatedAt: now,
   };
 }
