@@ -15,6 +15,7 @@ describe('initWorld', () => {
 
   it('uses provided seed', () => {
     const a = initWorld(0, 7);
+    resetIdsForTests();
     const b = initWorld(0, 7);
     expect(a).toEqual(b);
   });
