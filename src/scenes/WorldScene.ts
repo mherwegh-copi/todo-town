@@ -14,6 +14,7 @@ import { DayNightOverlay } from '../rendering/dayNightOverlay';
 import { WeatherRenderer } from '../rendering/weatherRenderer';
 import { weatherForDay } from '../systems/weather';
 import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, RENDER_SCALE, SIM_TICK_MS } from '../config';
+import { BUILDING_FOOTPRINT } from '../domain/building';
 
 export class WorldScene extends Phaser.Scene {
   private state!: GameState;
@@ -25,6 +26,8 @@ export class WorldScene extends Phaser.Scene {
   private weatherFx!: WeatherRenderer;
   private lastSimTick = 0;
   private lastCatchUp = 0;
+  private debugLayer!: Phaser.GameObjects.Container;
+  private debugVisible = false;
 
   constructor() { super('WorldScene'); }
 
@@ -37,6 +40,7 @@ export class WorldScene extends Phaser.Scene {
     this.tileLayer = this.add.container(0, 0);
     this.buildingLayer = this.add.container(0, 0);
     this.villagerLayer = this.add.container(0, 0);
+    this.debugLayer = this.add.container(0, 0).setVisible(false).setDepth(500);
 
     renderTiles(this, this.state, this.tileLayer);
     renderBuildings(this, this.state, this.buildingLayer);
@@ -108,7 +112,65 @@ export class WorldScene extends Phaser.Scene {
     updateVillagerPositions(state, this.villagerSprites, Date.now());
     this.registry.set('state', state);
     saveState(state);
+    if (this.debugVisible) this.renderDebug();
   }
 
   getState(): GameState { return this.state; }
+
+  setDebugVisible(on: boolean): void {
+    this.debugVisible = on;
+    this.debugLayer.setVisible(on);
+    if (on) this.renderDebug();
+  }
+
+  private renderDebug(): void {
+    this.debugLayer.removeAll(true);
+    const g = this.add.graphics();
+    g.lineStyle(1, 0xffffff, 0.35);
+    for (let x = 0; x <= MAP_WIDTH; x++) {
+      g.lineBetween(x * TILE_SIZE, 0, x * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
+    }
+    for (let y = 0; y <= MAP_HEIGHT; y++) {
+      g.lineBetween(0, y * TILE_SIZE, MAP_WIDTH * TILE_SIZE, y * TILE_SIZE);
+    }
+    g.lineStyle(1, 0xff3030, 0.9);
+    for (const b of this.state.world.buildings) {
+      const fp = BUILDING_FOOTPRINT[b.kind];
+      g.strokeRect(b.tileX * TILE_SIZE, b.tileY * TILE_SIZE, fp.w * TILE_SIZE, fp.h * TILE_SIZE);
+    }
+    this.debugLayer.add(g);
+
+    for (let x = 0; x < MAP_WIDTH; x += 4) {
+      for (let y = 0; y < MAP_HEIGHT; y += 4) {
+        const t = this.add.text(x * TILE_SIZE + 1, y * TILE_SIZE + 1, `${x},${y}`, {
+          fontFamily: 'monospace', fontSize: '6px', color: '#ffffffaa',
+        });
+        this.debugLayer.add(t);
+      }
+    }
+
+    for (const b of this.state.world.buildings) {
+      const fp = BUILDING_FOOTPRINT[b.kind];
+      const cx = (b.tileX + fp.w / 2) * TILE_SIZE;
+      const cy = (b.tileY + fp.h / 2) * TILE_SIZE;
+      const label = this.add.text(cx, cy, b.kind, {
+        fontFamily: 'monospace', fontSize: '8px', color: '#ffffff', backgroundColor: '#000000aa',
+      }).setOrigin(0.5, 0.5);
+      this.debugLayer.add(label);
+    }
+
+    for (const v of this.state.world.villagers) {
+      const target = this.state.world.buildings.find((b) => b.id === v.homeId);
+      if (!target) continue;
+      const fp = BUILDING_FOOTPRINT[target.kind];
+      const cx = (target.tileX + fp.w / 2) * TILE_SIZE;
+      const cy = (target.tileY + fp.h / 2) * TILE_SIZE;
+      const label = this.add.text(cx, cy - 16, v.name, {
+        fontFamily: 'monospace', fontSize: '8px', color: '#ffff80', backgroundColor: '#000000aa',
+      }).setOrigin(0.5, 0.5);
+      this.debugLayer.add(label);
+    }
+  }
+
+  isDebugVisible(): boolean { return this.debugVisible; }
 }

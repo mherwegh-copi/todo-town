@@ -3,6 +3,7 @@ import { ClockWidget } from '../ui/ClockWidget';
 import { ActionButton } from '../ui/ActionButton';
 import { CardOverlay } from '../ui/CardOverlay';
 import { Tooltip } from '../ui/Tooltip';
+import { DebugButton } from '../ui/DebugButton';
 import { drawCards, applyChosenCard, isActionAvailable } from '../systems/dailyAction';
 import { GameState } from '../domain/state';
 import { WorldScene } from './WorldScene';
@@ -33,6 +34,8 @@ export class UIScene extends Phaser.Scene {
       tooltip.show(lines.join('\n'));
     });
     world.events.on('hover-clear', () => tooltip.hide());
+
+    new DebugButton(this, (on) => world.setDebugVisible(on));
   }
 
   update(): void {
