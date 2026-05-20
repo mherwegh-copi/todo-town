@@ -3,6 +3,10 @@ import {
   TODO_STORAGE_KEY,
   TODO_SORT_KEY,
   TODO_DONE_COLLAPSED_KEY,
+  TODO_DAILY_GOAL_KEY,
+  DAILY_GOAL_MIN,
+  DAILY_GOAL_MAX,
+  DAILY_GOAL_DEFAULT,
 } from '../config';
 import { SortMode } from './todoSort';
 
@@ -109,5 +113,24 @@ export function saveDoneCollapsed(collapsed: boolean): void {
     localStorage.setItem(TODO_DONE_COLLAPSED_KEY, String(collapsed));
   } catch (e) {
     console.error('saveDoneCollapsed failed', e);
+  }
+}
+
+export function clampDailyGoal(n: number): number {
+  if (!Number.isFinite(n)) return DAILY_GOAL_DEFAULT;
+  return Math.min(DAILY_GOAL_MAX, Math.max(DAILY_GOAL_MIN, Math.round(n)));
+}
+
+export function loadDailyGoal(): number {
+  const raw = localStorage.getItem(TODO_DAILY_GOAL_KEY);
+  if (raw == null) return DAILY_GOAL_DEFAULT;
+  return clampDailyGoal(Number(raw));
+}
+
+export function saveDailyGoal(goal: number): void {
+  try {
+    localStorage.setItem(TODO_DAILY_GOAL_KEY, String(clampDailyGoal(goal)));
+  } catch (e) {
+    console.error('saveDailyGoal failed', e);
   }
 }
