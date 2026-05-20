@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { addTodo, toggleTodo, updateTodoText, deleteTodo } from '../../../src/systems/todoStore';
 import { newTodo } from '../../../src/domain/todo';
 
@@ -38,5 +38,45 @@ describe('todoStore pure ops', () => {
     const t1 = newTodo('a', 1);
     const t2 = newTodo('b', 2);
     expect(deleteTodo([t1, t2], t1.id)).toEqual([t2]);
+  });
+});
+
+import { loadTodos, saveTodos } from '../../../src/systems/todoStore';
+
+describe('todoStore persistence', () => {
+  let store: Record<string, string>;
+
+  beforeEach(() => {
+    store = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      clear: () => {
+        store = {};
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      length: 0,
+      key: (index: number) => null,
+    });
+  });
+
+  it('loadTodos returns [] when nothing stored', () => {
+    expect(loadTodos()).toEqual([]);
+  });
+
+  it('saveTodos + loadTodos round-trip', () => {
+    const t = newTodo('a', 1);
+    saveTodos([t]);
+    const loaded = loadTodos();
+    expect(loaded).toEqual([t]);
+  });
+
+  it('loadTodos returns [] on corrupt JSON', () => {
+    localStorage.setItem('village-todos', 'not-json');
+    expect(loadTodos()).toEqual([]);
   });
 });

@@ -1,4 +1,5 @@
 import { Todo } from '../domain/todo';
+import { TODO_STORAGE_KEY } from '../config';
 
 export function addTodo(todos: readonly Todo[], todo: Todo): readonly Todo[] {
   return [...todos, todo];
@@ -26,4 +27,24 @@ export function updateTodoText(todos: readonly Todo[], id: string, text: string)
 
 export function deleteTodo(todos: readonly Todo[], id: string): readonly Todo[] {
   return todos.filter((t) => t.id !== id);
+}
+
+export function loadTodos(): readonly Todo[] {
+  const raw = localStorage.getItem(TODO_STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as Todo[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+
+export function saveTodos(todos: readonly Todo[]): void {
+  try {
+    localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos));
+  } catch (e) {
+    console.error('saveTodos failed', e);
+  }
 }

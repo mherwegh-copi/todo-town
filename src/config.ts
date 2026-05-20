@@ -11,3 +11,4 @@ export const MAX_CATCHUP_DAYS = 30;
 
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 export type Season = (typeof SEASONS)[number];
+export const TODO_STORAGE_KEY = 'village-todos';
