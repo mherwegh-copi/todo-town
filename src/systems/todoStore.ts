@@ -124,9 +124,7 @@ export function clampDailyGoal(n: number): number {
 export function loadDailyGoal(): number {
   const raw = localStorage.getItem(TODO_DAILY_GOAL_KEY);
   if (raw == null) return DAILY_GOAL_DEFAULT;
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return DAILY_GOAL_DEFAULT;
-  return clampDailyGoal(n);
+  return clampDailyGoal(Number(raw));
 }
 
 export function saveDailyGoal(goal: number): void {
