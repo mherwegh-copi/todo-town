@@ -5,14 +5,21 @@ export const TT_SHEET = 'tt';
 export const TT_FRAME_SIZE = 16;
 export const TT_COLS = 12;
 
+// Path 3x3 blend frames (grass-cornered dirt blob)
+export const PATH = {
+  nw: 12, n: 13, ne: 14,
+  w: 24, c: 25, e: 26,
+  sw: 36, s: 37, se: 38,
+} as const;
+
 export const FRAME = {
   // terrain
   grass: 0,
   grass2: 1,
   grass3: 2,
-  dirt: 36,
+  dirt: PATH.c,
   water: 41,
-  path: 27,
+  path: PATH.c,
 
   // single-frame fallbacks (stretched to footprint)
   townHall: 47,

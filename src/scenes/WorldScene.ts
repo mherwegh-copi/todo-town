@@ -4,6 +4,7 @@ import { initWorld } from '../systems/init';
 import { loadState, saveState } from '../systems/save';
 import { catchUp } from '../systems/catchup';
 import { renderTiles } from '../rendering/tileRenderer';
+import { renderPaths } from '../rendering/pathRenderer';
 import { renderBuildings } from '../rendering/buildingRenderer';
 import {
   ensureVillagerSprites,
@@ -19,6 +20,7 @@ import { BUILDING_FOOTPRINT } from '../domain/building';
 export class WorldScene extends Phaser.Scene {
   private state!: GameState;
   private tileLayer!: Phaser.GameObjects.Container;
+  private pathLayer!: Phaser.GameObjects.Container;
   private buildingLayer!: Phaser.GameObjects.Container;
   private villagerLayer!: Phaser.GameObjects.Container;
   private villagerSprites: VillagerSpritesMap = new Map();
@@ -38,11 +40,13 @@ export class WorldScene extends Phaser.Scene {
     saveState(this.state);
 
     this.tileLayer = this.add.container(0, 0);
+    this.pathLayer = this.add.container(0, 0);
     this.buildingLayer = this.add.container(0, 0);
     this.villagerLayer = this.add.container(0, 0);
     this.debugLayer = this.add.container(0, 0).setVisible(false).setDepth(500);
 
     renderTiles(this, this.state, this.tileLayer);
+    renderPaths(this, this.state, this.pathLayer);
     renderBuildings(this, this.state, this.buildingLayer);
     ensureVillagerSprites(this, this.state, this.villagerLayer, this.villagerSprites);
     updateVillagerPositions(this.state, this.villagerSprites, now);
@@ -107,6 +111,7 @@ export class WorldScene extends Phaser.Scene {
 
   refresh(state: GameState): void {
     this.state = state;
+    renderPaths(this, state, this.pathLayer);
     renderBuildings(this, state, this.buildingLayer);
     ensureVillagerSprites(this, state, this.villagerLayer, this.villagerSprites);
     updateVillagerPositions(state, this.villagerSprites, Date.now());
