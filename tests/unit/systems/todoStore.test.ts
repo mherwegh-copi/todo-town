@@ -10,28 +10,31 @@ describe('todoStore pure ops', () => {
     expect(out).toEqual([t1, t2]);
   });
 
-  it('toggleTodo flips done and returns toggled item', () => {
+  it('toggleTodo flips done, updates updatedAt, returns toggled item', () => {
     const t = newTodo('a', 1);
-    const { todos, toggled } = toggleTodo([t], t.id);
+    const { todos, toggled } = toggleTodo([t], t.id, 100);
     expect(todos[0]!.done).toBe(true);
+    expect(todos[0]!.updatedAt).toBe(100);
     expect(toggled).toEqual({ from: false, to: true });
-    const again = toggleTodo(todos, t.id);
+    const again = toggleTodo(todos, t.id, 200);
     expect(again.todos[0]!.done).toBe(false);
+    expect(again.todos[0]!.updatedAt).toBe(200);
     expect(again.toggled).toEqual({ from: true, to: false });
   });
 
   it('toggleTodo with unknown id returns same list and null', () => {
     const t = newTodo('a', 1);
-    const out = toggleTodo([t], 'nope');
+    const out = toggleTodo([t], 'nope', 100);
     expect(out.todos).toEqual([t]);
     expect(out.toggled).toBeNull();
   });
 
-  it('updateTodoText replaces text trimmed, throws on empty', () => {
+  it('updateTodoText replaces text trimmed, updates updatedAt, throws on empty', () => {
     const t = newTodo('a', 1);
-    const out = updateTodoText([t], t.id, '  new  ');
+    const out = updateTodoText([t], t.id, '  new  ', 100);
     expect(out[0]!.text).toBe('new');
-    expect(() => updateTodoText([t], t.id, '   ')).toThrow();
+    expect(out[0]!.updatedAt).toBe(100);
+    expect(() => updateTodoText([t], t.id, '   ', 100)).toThrow();
   });
 
   it('deleteTodo removes by id', () => {
