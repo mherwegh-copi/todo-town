@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameState } from '../domain/state';
 import { TILE_SIZE } from '../config';
 import { BUILDING_FOOTPRINT } from '../domain/building';
+import { TT_SHEET, buildingFrame } from './frames';
 
 export function renderBuildings(
   scene: Phaser.Scene,
@@ -12,7 +13,7 @@ export function renderBuildings(
   for (const b of state.world.buildings) {
     const fp = BUILDING_FOOTPRINT[b.kind];
     const img = scene.add
-      .image(b.tileX * TILE_SIZE, b.tileY * TILE_SIZE, b.kind)
+      .image(b.tileX * TILE_SIZE, b.tileY * TILE_SIZE, TT_SHEET, buildingFrame(b.kind))
       .setOrigin(0, 0)
       .setDisplaySize(fp.w * TILE_SIZE, fp.h * TILE_SIZE)
       .setInteractive();

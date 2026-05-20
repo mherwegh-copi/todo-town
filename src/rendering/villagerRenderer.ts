@@ -4,6 +4,7 @@ import { TILE_SIZE } from '../config';
 import { villagerActivityAt } from '../systems/villagerAI';
 import { BUILDING_FOOTPRINT } from '../domain/building';
 import { hourOfDay } from '../systems/clock';
+import { TT_SHEET, villagerFrame } from './frames';
 
 export type VillagerSpritesMap = Map<string, Phaser.GameObjects.Image>;
 
@@ -22,7 +23,7 @@ export function ensureVillagerSprites(
   }
   for (const v of state.world.villagers) {
     if (!sprites.has(v.id)) {
-      const img = scene.add.image(0, 0, 'villager').setOrigin(0.5, 1);
+      const img = scene.add.image(0, 0, TT_SHEET, villagerFrame(v.spriteVariant)).setOrigin(0.5, 1);
       container.add(img);
       sprites.set(v.id, img);
     }
