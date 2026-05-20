@@ -1,12 +1,12 @@
 import { ActionCard } from './types';
 import { GameState } from '../domain/state';
-import { placeBuilding, findFreeSpot } from '../systems/worldOps';
+import { placeBuilding, findFreeSpot, isFootprintFree } from '../systems/worldOps';
 import { computeMetrics, canUpgradeTownHall } from '../systems/progression';
 import { nextId } from '../domain/ids';
 import { Villager, VILLAGER_NAMES } from '../domain/villager';
 import { defaultSchedule } from '../systems/villagerAI';
 import { createRng, rngPick, rngInt } from '../systems/rng';
-import { isWorkBuilding } from '../domain/building';
+import { isWorkBuilding, BuildingKind } from '../domain/building';
 
 function townHallOrCenter(state: GameState): { x: number; y: number } {
   const th = state.world.buildings.find((b) => b.kind === 'townHall');
@@ -20,6 +20,26 @@ function pickFreeHouseId(state: GameState): string | undefined {
   return free?.id;
 }
 
+/**
+ * Pose un bâtiment. Si `coords` est fourni et la case est libre, pose là ;
+ * sinon repli sur findFreeSpot autour de la mairie (ceinture + bretelles —
+ * PlacementController ne confirme déjà que des cases valides).
+ */
+function placeAt(
+  s: GameState,
+  kind: BuildingKind,
+  now: number,
+  coords: { x: number; y: number } | undefined,
+): GameState {
+  if (coords && isFootprintFree(s, kind, coords.x, coords.y)) {
+    return placeBuilding(s, kind, coords.x, coords.y, now);
+  }
+  const c = townHallOrCenter(s);
+  const spot = findFreeSpot(s, kind, c.x, c.y);
+  if (!spot) return s;
+  return placeBuilding(s, kind, spot.x, spot.y, now);
+}
+
 export const ALL_CARDS: readonly ActionCard[] = [
   {
     id: 'build_house',
@@ -29,16 +49,12 @@ export const ALL_CARDS: readonly ActionCard[] = [
     category: 'housing',
     minTier: 1,
     weight: 10,
+    placementKind: 'house',
     isAvailable: (s) => {
       const c = townHallOrCenter(s);
       return findFreeSpot(s, 'house', c.x, c.y) !== null;
     },
-    effect: (s, now) => {
-      const c = townHallOrCenter(s);
-      const spot = findFreeSpot(s, 'house', c.x, c.y);
-      if (!spot) return s;
-      return placeBuilding(s, 'house', spot.x, spot.y, now);
-    },
+    effect: (s, now, coords) => placeAt(s, 'house', now, coords),
   },
   {
     id: 'build_farm',
@@ -48,16 +64,12 @@ export const ALL_CARDS: readonly ActionCard[] = [
     category: 'work',
     minTier: 1,
     weight: 6,
+    placementKind: 'farm',
     isAvailable: (s) => {
       const c = townHallOrCenter(s);
       return findFreeSpot(s, 'farm', c.x, c.y) !== null;
     },
-    effect: (s, now) => {
-      const c = townHallOrCenter(s);
-      const spot = findFreeSpot(s, 'farm', c.x, c.y);
-      if (!spot) return s;
-      return placeBuilding(s, 'farm', spot.x, spot.y, now);
-    },
+    effect: (s, now, coords) => placeAt(s, 'farm', now, coords),
   },
   {
     id: 'build_forge',
@@ -67,17 +79,13 @@ export const ALL_CARDS: readonly ActionCard[] = [
     category: 'work',
     minTier: 2,
     weight: 5,
+    placementKind: 'forge',
     isAvailable: (s) => {
       if (s.progression.townHallLevel < 2) return false;
       const c = townHallOrCenter(s);
       return findFreeSpot(s, 'forge', c.x, c.y) !== null;
     },
-    effect: (s, now) => {
-      const c = townHallOrCenter(s);
-      const spot = findFreeSpot(s, 'forge', c.x, c.y);
-      if (!spot) return s;
-      return placeBuilding(s, 'forge', spot.x, spot.y, now);
-    },
+    effect: (s, now, coords) => placeAt(s, 'forge', now, coords),
   },
   {
     id: 'build_mill',
@@ -87,17 +95,13 @@ export const ALL_CARDS: readonly ActionCard[] = [
     category: 'work',
     minTier: 2,
     weight: 5,
+    placementKind: 'mill',
     isAvailable: (s) => {
       if (s.progression.townHallLevel < 2) return false;
       const c = townHallOrCenter(s);
       return findFreeSpot(s, 'mill', c.x, c.y) !== null;
     },
-    effect: (s, now) => {
-      const c = townHallOrCenter(s);
-      const spot = findFreeSpot(s, 'mill', c.x, c.y);
-      if (!spot) return s;
-      return placeBuilding(s, 'mill', spot.x, spot.y, now);
-    },
+    effect: (s, now, coords) => placeAt(s, 'mill', now, coords),
   },
   {
     id: 'build_well',
@@ -107,16 +111,12 @@ export const ALL_CARDS: readonly ActionCard[] = [
     category: 'infrastructure',
     minTier: 1,
     weight: 3,
+    placementKind: 'well',
     isAvailable: (s) => {
       const c = townHallOrCenter(s);
       return findFreeSpot(s, 'well', c.x, c.y) !== null;
     },
-    effect: (s, now) => {
-      const c = townHallOrCenter(s);
-      const spot = findFreeSpot(s, 'well', c.x, c.y);
-      if (!spot) return s;
-      return placeBuilding(s, 'well', spot.x, spot.y, now);
-    },
+    effect: (s, now, coords) => placeAt(s, 'well', now, coords),
   },
   {
     id: 'recruit_villager',

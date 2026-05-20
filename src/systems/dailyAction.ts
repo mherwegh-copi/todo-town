@@ -49,9 +49,14 @@ export function drawCards(state: GameState, now: number): readonly ActionCard[] 
   return picked;
 }
 
-export function applyChosenCard(state: GameState, cardId: string, now: number): GameState {
+export function applyChosenCard(
+  state: GameState,
+  cardId: string,
+  now: number,
+  coords?: { x: number; y: number },
+): GameState {
   const card = cardById(cardId);
-  const after = card.effect(state, now);
+  const after = card.effect(state, now, coords);
   const motivation = Math.max(0, state.motivation - MOTIVATION_ACTION_COST);
   return { ...after, lastActionDate: dateKey(now), lastSeenAt: now, motivation };
 }
