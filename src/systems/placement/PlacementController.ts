@@ -165,6 +165,7 @@ export class PlacementController {
     this.scene.input.off('pointerdown', this.onDown, this);
     this.keyEsc?.off('down', this.onEsc, this);
     if (this.keyEsc) this.scene.input.keyboard?.removeKey(this.keyEsc);
+    this.scene.tweens.killTweensOf(this.ghost);
     this.ghost.destroy(true);
     this.highlight.destroy();
   }

@@ -84,6 +84,7 @@ export class UIScene extends Phaser.Scene {
         () => {
           this.placing = false;
           // Carte non jouée : aucun coût, on ré-affiche le choix de cartes.
+          this.overlay.hide();
           this.overlay.show(this.drawnCards);
         },
       );
