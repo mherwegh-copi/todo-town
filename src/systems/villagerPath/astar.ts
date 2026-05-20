@@ -7,12 +7,30 @@ function manhattan(a: TileXY, b: TileXY): number {
   return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 }
 
+function snapToGraph(graph: Graph, p: TileXY): TileXY | null {
+  if (graph.tiles.size === 0) return null;
+  if (graph.tiles.has(tileKey(p))) return p;
+  let best: TileXY | null = null;
+  let bestD = Infinity;
+  for (const k of graph.tiles) {
+    const t = parseTileKey(k);
+    const d = manhattan(t, p);
+    if (d < bestD) {
+      bestD = d;
+      best = t;
+    }
+  }
+  return best;
+}
+
 export function findPath(graph: Graph, from: TileXY, to: TileXY): TileXY[] | null {
   if (graph.tiles.size === 0) return null;
-  const fromKey = tileKey(from);
-  const toKey = tileKey(to);
-  if (!graph.tiles.has(fromKey) || !graph.tiles.has(toKey)) return null;
-  if (fromKey === toKey) return [from];
+  const fromSnap = snapToGraph(graph, from);
+  const toSnap = snapToGraph(graph, to);
+  if (!fromSnap || !toSnap) return null;
+  const fromKey = tileKey(fromSnap);
+  const toKey = tileKey(toSnap);
+  if (fromKey === toKey) return [fromSnap];
 
   const open = new Set<string>([fromKey]);
   const cameFrom = new Map<string, string>();

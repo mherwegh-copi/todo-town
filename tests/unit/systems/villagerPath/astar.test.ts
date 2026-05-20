@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { findPath } from '../../../../src/systems/villagerPath/astar';
-import { buildGraph } from '../../../../src/systems/villagerPath/graph';
+import { buildGraph, tileKey } from '../../../../src/systems/villagerPath/graph';
 import { emptyState } from '../../../../src/domain/state';
 import { placeBuilding } from '../../../../src/systems/worldOps';
 
@@ -36,5 +36,21 @@ describe('villagerPath/astar (in-graph)', () => {
     const g = buildGraph(emptyState(0, 1));
     const p = findPath(g, { x: 0, y: 0 }, { x: 1, y: 0 });
     expect(p).toBeNull();
+  });
+});
+
+describe('villagerPath/astar (snap)', () => {
+  it('snaps from/to to nearest graph tiles', () => {
+    let s = emptyState(0, 1);
+    s = placeBuilding(s, 'townHall', 10, 10, 0);
+    s = placeBuilding(s, 'house', 18, 10, 0);
+    const g = buildGraph(s);
+    // (10, 10) is inside townHall footprint → not in graph
+    expect(g.tiles.has(tileKey({ x: 10, y: 10 }))).toBe(false);
+    const someGraphTile = [...g.tiles][0]!;
+    const [gx, gy] = someGraphTile.split(',').map(Number) as [number, number];
+    const p = findPath(g, { x: 10, y: 10 }, { x: gx, y: gy });
+    expect(p).not.toBeNull();
+    expect(p!.length).toBeGreaterThan(0);
   });
 });
