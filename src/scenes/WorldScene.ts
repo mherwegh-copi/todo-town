@@ -15,7 +15,9 @@ import { DayNightOverlay } from '../rendering/dayNightOverlay';
 import { WeatherRenderer } from '../rendering/weatherRenderer';
 import { weatherForDay } from '../systems/weather';
 import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, RENDER_SCALE, SIM_TICK_MS } from '../config';
-import { BUILDING_FOOTPRINT } from '../domain/building';
+import { BUILDING_FOOTPRINT, BuildingKind } from '../domain/building';
+import { findFreeSpot, isFootprintFree } from '../systems/worldOps';
+import { PlacementController } from '../systems/placement/PlacementController';
 
 export class WorldScene extends Phaser.Scene {
   private state!: GameState;
@@ -30,11 +32,14 @@ export class WorldScene extends Phaser.Scene {
   private lastCatchUp = 0;
   private debugLayer!: Phaser.GameObjects.Container;
   private debugVisible = false;
+  private placementActive = false;
+  private placement?: PlacementController;
 
   constructor() { super('WorldScene'); }
 
   create(): void {
     const now = Date.now();
+    this.input.mouse?.disableContextMenu();
     const loaded = loadState();
     this.state = loaded ? catchUp(loaded, now) : initWorld(now, Math.floor(Math.random() * 1e9));
     saveState(this.state);
@@ -63,13 +68,14 @@ export class WorldScene extends Phaser.Scene {
     let lastX = 0;
     let lastY = 0;
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (this.placementActive) return;
       dragging = true;
       lastX = p.x;
       lastY = p.y;
     });
     this.input.on('pointerup', () => { dragging = false; });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (!dragging) return;
+      if (this.placementActive || !dragging) return;
       cam.scrollX -= (p.x - lastX) / cam.zoom;
       cam.scrollY -= (p.y - lastY) / cam.zoom;
       lastX = p.x;
@@ -122,6 +128,45 @@ export class WorldScene extends Phaser.Scene {
   }
 
   getState(): GameState { return this.state; }
+
+  /** Origine de la recherche du spot initial : la mairie, sinon le centre du monde. */
+  private placementOrigin(): { x: number; y: number } {
+    const th = this.state.world.buildings.find((b) => b.kind === 'townHall');
+    if (th) return { x: th.tileX, y: th.tileY };
+    return { x: Math.floor(MAP_WIDTH / 2), y: Math.floor(MAP_HEIGHT / 2) };
+  }
+
+  /**
+   * Ouvre le mode placement interactif. Suspend le pan caméra jusqu'à
+   * confirmation ou annulation. Si aucun spot initial libre, annule d'emblée.
+   */
+  beginPlacement(
+    kind: BuildingKind,
+    onConfirm: (coords: { x: number; y: number }) => void,
+    onCancel: () => void,
+  ): void {
+    if (this.placementActive) return;
+    const origin = this.placementOrigin();
+    const initial = findFreeSpot(this.state, kind, origin.x, origin.y);
+    if (!initial) {
+      onCancel();
+      return;
+    }
+    this.placementActive = true;
+    this.placement = new PlacementController(this, kind, initial, {
+      isValid: (x, y) => isFootprintFree(this.state, kind, x, y),
+      onConfirm: (coords) => {
+        this.placementActive = false;
+        this.placement = undefined;
+        onConfirm(coords);
+      },
+      onCancel: () => {
+        this.placementActive = false;
+        this.placement = undefined;
+        onCancel();
+      },
+    });
+  }
 
   bumpMotivation(delta: number): GameState {
     const next = { ...this.state, motivation: Math.max(0, this.state.motivation + delta) };
