@@ -116,6 +116,7 @@ export function updateVillagerPositions(
   for (const v of state.world.villagers) {
     const sprite = sprites.get(v.id);
     if (!sprite) continue;
+    if (sprite.getData('celebrating') === true) continue;
     const activity = villagerActivityAt(v, h);
 
     if (activity.activity === 'sleep') {

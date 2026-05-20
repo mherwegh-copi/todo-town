@@ -187,14 +187,16 @@ export class WorldScene extends Phaser.Scene {
     }
     if (sprites.length === 0) return;
     const sprite = sprites[Math.floor(Math.random() * sprites.length)]!;
+    if (sprite.getData('celebrating') === true) return;
     const baseY = sprite.y;
+    sprite.setData('celebrating', true);
     this.tweens.add({
       targets: sprite,
       y: baseY - 8,
       duration: 200,
       yoyo: true,
       ease: 'Quad.easeOut',
-      onComplete: () => { sprite.y = baseY; },
+      onComplete: () => { sprite.y = baseY; sprite.setData('celebrating', false); },
     });
   }
 }
