@@ -23,6 +23,7 @@ export type GameState = {
     readonly townHallLevel: number;
     readonly unlockedCards: readonly string[];
   };
+  readonly motivation: number;
 };
 
 export function emptyState(now: number, seed: number): GameState {
@@ -40,5 +41,6 @@ export function emptyState(now: number, seed: number): GameState {
     seed,
     world: { width: MAP_WIDTH, height: MAP_HEIGHT, tiles, buildings: [], crops: [], villagers: [] },
     progression: { day: 0, townHallLevel: 1, unlockedCards: [] },
+    motivation: 0,
   };
 }

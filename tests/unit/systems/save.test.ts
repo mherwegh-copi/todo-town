@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { saveState, loadState, clearSave } from '../../../src/systems/save';
 import { emptyState } from '../../../src/domain/state';
-import { SAVE_KEY } from '../../../src/config';
+import { SAVE_KEY, SAVE_VERSION } from '../../../src/config';
 
 describe('save', () => {
   let store: Record<string, string> = {};
@@ -50,6 +50,26 @@ describe('save', () => {
   it('clearSave removes data', () => {
     saveState(emptyState(0, 1));
     clearSave();
+    expect(loadState()).toBeNull();
+  });
+
+  it('loads state and defaults motivation to 0 when missing', () => {
+    const base = emptyState(1, 42);
+    const { motivation: _drop, ...withoutMotivation } = base;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(withoutMotivation));
+    const loaded = loadState();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.motivation).toBe(0);
+  });
+
+  it('preserves motivation when present', () => {
+    const s = { ...emptyState(1, 42), motivation: 5 };
+    saveState(s);
+    expect(loadState()!.motivation).toBe(5);
+  });
+
+  it('returns null on version mismatch', () => {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION - 1 }));
     expect(loadState()).toBeNull();
   });
 });

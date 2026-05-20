@@ -13,12 +13,15 @@ export function loadState(): GameState | null {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as GameState;
+    const parsed = JSON.parse(raw) as Partial<GameState> & { version?: number };
     if (parsed.version !== SAVE_VERSION) {
       console.warn('save version mismatch; ignoring');
       return null;
     }
-    return parsed;
+    return {
+      ...(parsed as GameState),
+      motivation: typeof parsed.motivation === 'number' ? parsed.motivation : 0,
+    };
   } catch (e) {
     console.error('loadState failed', e);
     return null;
