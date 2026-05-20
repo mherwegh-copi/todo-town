@@ -101,10 +101,10 @@ export class WorldScene extends Phaser.Scene {
       saveState(this.state);
     }
 
-    if (time - this.lastSimTick < SIM_TICK_MS) return;
-    this.lastSimTick = time;
     const now = Date.now();
     updateVillagerPositions(this.state, this.villagerSprites, now);
+    if (time - this.lastSimTick < SIM_TICK_MS) return;
+    this.lastSimTick = time;
     this.overlay.update(now);
     this.weatherFx.apply(weatherForDay(this.state.seed, this.state.progression.day));
   }
