@@ -24,6 +24,7 @@ export class WorldScene extends Phaser.Scene {
   private overlay!: DayNightOverlay;
   private weatherFx!: WeatherRenderer;
   private lastSimTick = 0;
+  private lastCatchUp = 0;
 
   constructor() { super('WorldScene'); }
 
@@ -85,6 +86,13 @@ export class WorldScene extends Phaser.Scene {
   }
 
   update(time: number): void {
+    if (Date.now() - this.lastCatchUp > 60_000) {
+      this.lastCatchUp = Date.now();
+      this.state = catchUp(this.state, Date.now());
+      this.registry.set('state', this.state);
+      saveState(this.state);
+    }
+
     if (time - this.lastSimTick < SIM_TICK_MS) return;
     this.lastSimTick = time;
     const now = Date.now();
