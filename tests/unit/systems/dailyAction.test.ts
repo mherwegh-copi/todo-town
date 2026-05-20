@@ -106,3 +106,27 @@ describe('applyChosenCard motivation cost', () => {
     expect(next.motivation).toBe(15);
   });
 });
+
+describe('applyChosenCard placement coords', () => {
+  beforeEach(() => resetIdsForTests());
+
+  it('places building at explicit coords when provided', () => {
+    let s = emptyState(0, 1);
+    s = placeBuilding(s, 'townHall', 15, 15, 0);
+    const now = new Date(2026, 4, 21, 7).getTime();
+    const next = applyChosenCard(s, 'build_house', now, { x: 3, y: 3 });
+    const house = next.world.buildings.find((b) => b.kind === 'house');
+    expect(house).toBeDefined();
+    expect(house!.tileX).toBe(3);
+    expect(house!.tileY).toBe(3);
+    expect(next.lastActionDate).toBe('2026-05-21');
+  });
+
+  it('still auto-places when no coords given', () => {
+    let s = emptyState(0, 1);
+    s = placeBuilding(s, 'townHall', 15, 15, 0);
+    const now = new Date(2026, 4, 21, 7).getTime();
+    const next = applyChosenCard(s, 'build_house', now);
+    expect(next.world.buildings.filter((b) => b.kind === 'house')).toHaveLength(1);
+  });
+});
