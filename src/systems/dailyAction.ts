@@ -4,7 +4,7 @@ import { ALL_CARDS, cardById } from '../cards/deck';
 import { createRng, rngInt } from './rng';
 import { computeMetrics } from './progression';
 import { dateKey, hourOfDay } from './clock';
-import { DAY_START_HOUR } from '../config';
+import { DAY_START_HOUR, BASE_CARDS_DRAWN, MOTIVATION_CARDS_DIV, MOTIVATION_BONUS_CAP } from '../config';
 
 export function isActionAvailable(state: GameState, now: number): boolean {
   if (hourOfDay(now) < DAY_START_HOUR) return false;
@@ -25,10 +25,12 @@ export function drawCards(state: GameState, now: number): readonly ActionCard[] 
     (c) => c.minTier <= state.progression.townHallLevel && c.isAvailable(state),
   );
   if (pool.length === 0) return [];
+  const bonus = Math.min(MOTIVATION_BONUS_CAP, Math.floor(state.motivation / MOTIVATION_CARDS_DIV));
+  const target = BASE_CARDS_DRAWN + bonus;
   const rng = createRng((state.seed ^ Math.floor(now / 1000)) >>> 0);
   const picked: ActionCard[] = [];
   const remaining = [...pool];
-  while (picked.length < 3 && remaining.length > 0) {
+  while (picked.length < target && remaining.length > 0) {
     const weights = remaining.map((c) => pondWeight(c, state));
     const total = weights.reduce((a, b) => a + b, 0);
     let r = rng() * total;
@@ -50,5 +52,5 @@ export function drawCards(state: GameState, now: number): readonly ActionCard[] 
 export function applyChosenCard(state: GameState, cardId: string, now: number): GameState {
   const card = cardById(cardId);
   const after = card.effect(state, now);
-  return { ...after, lastActionDate: dateKey(now), lastSeenAt: now };
+  return { ...after, lastActionDate: dateKey(now), lastSeenAt: now, motivation: 0 };
 }
