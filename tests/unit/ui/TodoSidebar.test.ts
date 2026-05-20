@@ -194,9 +194,9 @@ describe('TodoSidebar sort + done section', () => {
       'alpha',
     );
     sb.render([newTodo('banana', 1), newTodo('apple', 2)]);
-    const labels = [...document.querySelectorAll('.todo-list .todo-label')].map(
-      (el) => el.textContent,
-    );
+    const labels = [
+      ...document.querySelectorAll('.todo-list:not(.todo-done-list) .todo-label'),
+    ].map((el) => el.textContent);
     expect(labels).toEqual(['apple', 'banana']);
   });
 
