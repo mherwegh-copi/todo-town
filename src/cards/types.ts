@@ -1,4 +1,5 @@
 import { GameState } from '../domain/state';
+import { BuildingKind } from '../domain/building';
 
 export type CardCategory =
   | 'housing'
@@ -17,6 +18,12 @@ export type ActionCard = {
   readonly category: CardCategory;
   readonly minTier: number;
   readonly weight: number;
+  /** Si défini : la carte ouvre le mode placement interactif pour ce type de bâtiment. */
+  readonly placementKind?: BuildingKind;
   readonly isAvailable: (state: GameState) => boolean;
-  readonly effect: (state: GameState, now: number) => GameState;
+  readonly effect: (
+    state: GameState,
+    now: number,
+    coords?: { x: number; y: number },
+  ) => GameState;
 };
