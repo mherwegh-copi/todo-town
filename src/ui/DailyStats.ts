@@ -10,6 +10,7 @@ export class DailyStats {
   private getGoal: () => number;
   private onGoalChange: (goal: number) => void;
   private timer: ReturnType<typeof setInterval>;
+  private editing = false;
 
   constructor(
     container: HTMLElement,
@@ -34,6 +35,7 @@ export class DailyStats {
   }
 
   render(): void {
+    if (this.editing) return;
     const done = countDoneToday(this.getTodos(), Date.now());
     const goal = this.getGoal();
     this.root.classList.toggle('goal-reached', done >= goal);
@@ -63,6 +65,7 @@ export class DailyStats {
     const finish = (commit: boolean): void => {
       if (finished) return;
       finished = true;
+      this.editing = false;
       if (commit) {
         const next = clampDailyGoal(Number(input.value));
         if (next !== this.getGoal()) {
@@ -70,7 +73,7 @@ export class DailyStats {
           return; // onGoalChange triggers a render which rebuilds the line
         }
       }
-      input.replaceWith(goalSpan);
+      if (input.isConnected) input.replaceWith(goalSpan);
     };
 
     input.addEventListener('keydown', (e) => {
@@ -79,6 +82,7 @@ export class DailyStats {
     });
     input.addEventListener('blur', () => finish(true));
 
+    this.editing = true;
     goalSpan.replaceWith(input);
     input.focus();
     input.select();

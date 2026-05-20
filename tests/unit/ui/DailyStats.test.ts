@@ -81,4 +81,16 @@ describe('DailyStats', () => {
     expect(document.querySelector('.clock-stats')!.textContent).toContain('1/5');
     stats.destroy();
   });
+
+  it('render() during an open edit does not destroy the input', () => {
+    const stats = new DailyStats(makeContainer(), () => [], () => 5, vi.fn());
+    (document.querySelector('.clock-goal') as HTMLElement).click();
+    const input = document.querySelector('input.clock-goal-edit') as HTMLInputElement;
+    input.value = '7';
+    stats.render(); // simulates a timer / parent-driven render mid-edit
+    const stillThere = document.querySelector('input.clock-goal-edit') as HTMLInputElement;
+    expect(stillThere).not.toBeNull();
+    expect(stillThere.value).toBe('7');
+    stats.destroy();
+  });
 });
