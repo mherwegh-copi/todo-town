@@ -4,6 +4,7 @@ import { ActionButton } from '../ui/ActionButton';
 import { CardOverlay } from '../ui/CardOverlay';
 import { Tooltip } from '../ui/Tooltip';
 import { DebugButton } from '../ui/DebugButton';
+import { TilePicker } from '../ui/TilePicker';
 import { drawCards, applyChosenCard, isActionAvailable } from '../systems/dailyAction';
 import { GameState } from '../domain/state';
 import { WorldScene } from './WorldScene';
@@ -35,7 +36,11 @@ export class UIScene extends Phaser.Scene {
     });
     world.events.on('hover-clear', () => tooltip.hide());
 
-    new DebugButton(this, (on) => world.setDebugVisible(on));
+    const picker = new TilePicker(this);
+    new DebugButton(this, (on) => {
+      world.setDebugVisible(on);
+      picker.setVisible(on);
+    });
   }
 
   update(): void {
