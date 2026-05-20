@@ -17,7 +17,7 @@ export type Building = {
 
 export const BUILDING_FOOTPRINT: Record<BuildingKind, { w: number; h: number }> = {
   townHall: { w: 3, h: 3 },
-  house: { w: 2, h: 2 },
+  house: { w: 4, h: 4 },
   farm: { w: 3, h: 3 },
   forge: { w: 2, h: 2 },
   mill: { w: 2, h: 2 },

@@ -14,18 +14,31 @@ export const FRAME = {
   water: 41,
   path: 27,
 
-  // buildings (single frame, will be stretched to footprint)
+  // single-frame fallbacks (stretched to footprint)
   townHall: 47,
-  house: 53,
   farm: 26,
   forge: 51,
   mill: 49,
   well: 33,
   square: 96,
 
-  // characters (variants)
-  villager: [84, 85, 86, 87] as const,
+  // characters (variants) — placeholder, awaiting confirmed indices
+  villager: [102, 103, 104, 105] as const,
 } as const;
+
+export type CompositeLayout = readonly (readonly number[])[];
+
+export const HOUSE_LAYOUT: CompositeLayout = [
+  [48, 49, 50, 51],
+  [60, 61, 62, 63],
+  [72, 73, 74, 75],
+  [84, 85, 86, 87],
+];
+
+export function buildingLayout(kind: string): CompositeLayout | null {
+  if (kind === 'house') return HOUSE_LAYOUT;
+  return null;
+}
 
 const GRASS_FRAMES = [FRAME.grass, FRAME.grass2, FRAME.grass3] as const;
 
@@ -45,13 +58,12 @@ export function tileFrame(kind: string, x: number, y: number, seed: number): num
 export function buildingFrame(kind: string): number {
   switch (kind) {
     case 'townHall': return FRAME.townHall;
-    case 'house': return FRAME.house;
     case 'farm': return FRAME.farm;
     case 'forge': return FRAME.forge;
     case 'mill': return FRAME.mill;
     case 'well': return FRAME.well;
     case 'square': return FRAME.square;
-    default: return FRAME.house;
+    default: return FRAME.grass;
   }
 }
 
