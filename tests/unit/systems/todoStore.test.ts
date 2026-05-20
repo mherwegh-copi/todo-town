@@ -39,6 +39,12 @@ describe('todoStore pure ops', () => {
     const t2 = newTodo('b', 2);
     expect(deleteTodo([t1, t2], t1.id)).toEqual([t2]);
   });
+
+  it('newTodo sets updatedAt equal to createdAt', () => {
+    const t = newTodo('a', 42);
+    expect(t.createdAt).toBe(42);
+    expect(t.updatedAt).toBe(42);
+  });
 });
 
 import { loadTodos, saveTodos } from '../../../src/systems/todoStore';
