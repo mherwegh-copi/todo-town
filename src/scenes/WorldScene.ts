@@ -49,6 +49,38 @@ export class WorldScene extends Phaser.Scene {
     this.cameras.main.setZoom(RENDER_SCALE);
     this.cameras.main.centerOn((MAP_WIDTH / 2) * TILE_SIZE, (MAP_HEIGHT / 2) * TILE_SIZE);
 
+    const cam = this.cameras.main;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      dragging = true;
+      lastX = p.x;
+      lastY = p.y;
+    });
+    this.input.on('pointerup', () => { dragging = false; });
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (!dragging) return;
+      cam.scrollX -= (p.x - lastX) / cam.zoom;
+      cam.scrollY -= (p.y - lastY) / cam.zoom;
+      lastX = p.x;
+      lastY = p.y;
+    });
+    this.input.on('wheel', (_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
+      const next = Phaser.Math.Clamp(cam.zoom + (dy < 0 ? 0.25 : -0.25), 1, 3);
+      cam.setZoom(next);
+    });
+
+    this.input.on('gameobjectover', (_p: Phaser.Input.Pointer, obj: Phaser.GameObjects.Image) => {
+      const bid = obj.getData('buildingId') as string | undefined;
+      if (bid) this.events.emit('hover-building', bid);
+    });
+    this.input.on('gameobjectout', () => this.events.emit('hover-clear'));
+    this.input.on('gameobjectdown', (_p: Phaser.Input.Pointer, obj: Phaser.GameObjects.Image) => {
+      const bid = obj.getData('buildingId') as string | undefined;
+      if (bid) this.events.emit('click-building', bid);
+    });
+
     this.registry.set('state', this.state);
   }
 

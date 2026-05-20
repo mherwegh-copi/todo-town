@@ -14,7 +14,8 @@ export function renderBuildings(
     const img = scene.add
       .image(b.tileX * TILE_SIZE, b.tileY * TILE_SIZE, b.kind)
       .setOrigin(0, 0)
-      .setDisplaySize(fp.w * TILE_SIZE, fp.h * TILE_SIZE);
+      .setDisplaySize(fp.w * TILE_SIZE, fp.h * TILE_SIZE)
+      .setInteractive();
     img.setData('buildingId', b.id);
     container.add(img);
   }
