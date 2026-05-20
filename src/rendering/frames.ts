@@ -35,8 +35,16 @@ export const HOUSE_LAYOUT: CompositeLayout = [
   [84, 85, 86, 87],
 ];
 
+export const TOWN_HALL_LAYOUT: CompositeLayout = [
+  [52, 53, 54, 55],
+  [64, 65, 66, 67],
+  [76, 77, 78, 79],
+  [88, 89, 90, 91],
+];
+
 export function buildingLayout(kind: string): CompositeLayout | null {
   if (kind === 'house') return HOUSE_LAYOUT;
+  if (kind === 'townHall') return TOWN_HALL_LAYOUT;
   return null;
 }
 
