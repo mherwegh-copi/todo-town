@@ -10,6 +10,9 @@ import {
   updateVillagerPositions,
   VillagerSpritesMap,
 } from '../rendering/villagerRenderer';
+import { DayNightOverlay } from '../rendering/dayNightOverlay';
+import { WeatherRenderer } from '../rendering/weatherRenderer';
+import { weatherForDay } from '../systems/weather';
 import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, RENDER_SCALE, SIM_TICK_MS } from '../config';
 
 export class WorldScene extends Phaser.Scene {
@@ -18,6 +21,8 @@ export class WorldScene extends Phaser.Scene {
   private buildingLayer!: Phaser.GameObjects.Container;
   private villagerLayer!: Phaser.GameObjects.Container;
   private villagerSprites: VillagerSpritesMap = new Map();
+  private overlay!: DayNightOverlay;
+  private weatherFx!: WeatherRenderer;
   private lastSimTick = 0;
 
   constructor() { super('WorldScene'); }
@@ -37,6 +42,10 @@ export class WorldScene extends Phaser.Scene {
     ensureVillagerSprites(this, this.state, this.villagerLayer, this.villagerSprites);
     updateVillagerPositions(this.state, this.villagerSprites, now);
 
+    this.overlay = new DayNightOverlay(this, this.scale.width, this.scale.height);
+    this.weatherFx = new WeatherRenderer(this, this.scale.width, this.scale.height);
+    this.weatherFx.apply(weatherForDay(this.state.seed, this.state.progression.day));
+
     this.cameras.main.setZoom(RENDER_SCALE);
     this.cameras.main.centerOn((MAP_WIDTH / 2) * TILE_SIZE, (MAP_HEIGHT / 2) * TILE_SIZE);
 
@@ -46,7 +55,10 @@ export class WorldScene extends Phaser.Scene {
   update(time: number): void {
     if (time - this.lastSimTick < SIM_TICK_MS) return;
     this.lastSimTick = time;
-    updateVillagerPositions(this.state, this.villagerSprites, Date.now());
+    const now = Date.now();
+    updateVillagerPositions(this.state, this.villagerSprites, now);
+    this.overlay.update(now);
+    this.weatherFx.apply(weatherForDay(this.state.seed, this.state.progression.day));
   }
 
   refresh(state: GameState): void {
