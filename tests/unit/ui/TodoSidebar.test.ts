@@ -142,3 +142,103 @@ describe('TodoSidebar toggle + edit', () => {
     expect(onEdit).not.toHaveBeenCalled();
   });
 });
+
+describe('TodoSidebar sort + done section', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('renders a sort select with three options', () => {
+    const sb = new TodoSidebar(makeContainer(), {
+      onAdd: vi.fn(),
+      onToggle: vi.fn(),
+      onEdit: vi.fn(),
+      onDelete: vi.fn(),
+    });
+    sb.render([]);
+    const select = document.querySelector<HTMLSelectElement>('.todo-sidebar select.todo-sort')!;
+    expect(select).not.toBeNull();
+    expect(select.querySelectorAll('option').length).toBe(3);
+  });
+
+  it('select reflects the initial sort mode passed to constructor', () => {
+    const sb = new TodoSidebar(
+      makeContainer(),
+      { onAdd: vi.fn(), onToggle: vi.fn(), onEdit: vi.fn(), onDelete: vi.fn() },
+      'alpha',
+    );
+    sb.render([]);
+    expect(document.querySelector<HTMLSelectElement>('.todo-sort')!.value).toBe('alpha');
+  });
+
+  it('onSortChange called when select changes', () => {
+    const onSortChange = vi.fn();
+    const sb = new TodoSidebar(makeContainer(), {
+      onAdd: vi.fn(),
+      onToggle: vi.fn(),
+      onEdit: vi.fn(),
+      onDelete: vi.fn(),
+      onSortChange,
+    });
+    sb.render([]);
+    const select = document.querySelector<HTMLSelectElement>('.todo-sort')!;
+    select.value = 'modified';
+    select.dispatchEvent(new Event('change'));
+    expect(onSortChange).toHaveBeenCalledWith('modified');
+  });
+
+  it('active todos sorted by alpha when mode is alpha', () => {
+    const sb = new TodoSidebar(
+      makeContainer(),
+      { onAdd: vi.fn(), onToggle: vi.fn(), onEdit: vi.fn(), onDelete: vi.fn() },
+      'alpha',
+    );
+    sb.render([newTodo('banana', 1), newTodo('apple', 2)]);
+    const labels = [
+      ...document.querySelectorAll('.todo-list:not(.todo-done-list) .todo-label'),
+    ].map((el) => el.textContent);
+    expect(labels).toEqual(['apple', 'banana']);
+  });
+
+  it('done todos go into the done section with a count header', () => {
+    const sb = new TodoSidebar(makeContainer(), {
+      onAdd: vi.fn(),
+      onToggle: vi.fn(),
+      onEdit: vi.fn(),
+      onDelete: vi.fn(),
+    });
+    const active = newTodo('todo', 1);
+    const done = { ...newTodo('finished', 2), done: true };
+    sb.render([active, done]);
+    expect(document.querySelectorAll('.todo-done-list .todo-item').length).toBe(1);
+    expect(document.querySelector('.todo-section-header')!.textContent).toContain('(1)');
+  });
+
+  it('clicking the done header toggles collapsed and calls onCollapseChange', () => {
+    const onCollapseChange = vi.fn();
+    const sb = new TodoSidebar(makeContainer(), {
+      onAdd: vi.fn(),
+      onToggle: vi.fn(),
+      onEdit: vi.fn(),
+      onDelete: vi.fn(),
+      onCollapseChange,
+    });
+    sb.render([]);
+    const section = document.querySelector('.todo-section')!;
+    expect(section.classList.contains('collapsed')).toBe(false);
+    document.querySelector<HTMLDivElement>('.todo-section-header')!.click();
+    expect(section.classList.contains('collapsed')).toBe(true);
+    expect(onCollapseChange).toHaveBeenCalledWith(true);
+  });
+
+  it('starts collapsed when initialCollapsed is true', () => {
+    const sb = new TodoSidebar(
+      makeContainer(),
+      { onAdd: vi.fn(), onToggle: vi.fn(), onEdit: vi.fn(), onDelete: vi.fn() },
+      'created',
+      true,
+    );
+    sb.render([]);
+    expect(document.querySelector('.todo-section')!.classList.contains('collapsed')).toBe(true);
+  });
+});

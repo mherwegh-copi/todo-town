@@ -11,6 +11,10 @@ import {
   toggleTodo,
   updateTodoText,
   deleteTodo,
+  loadSortMode,
+  saveSortMode,
+  loadDoneCollapsed,
+  saveDoneCollapsed,
 } from './systems/todoStore';
 import { newTodo } from './domain/todo';
 import type { Todo } from './domain/todo';
@@ -54,35 +58,47 @@ new SidebarClock(clockMount, () => {
 
 const pane = document.getElementById('todo-pane')!;
 let todos: readonly Todo[] = loadTodos();
-const sidebar = new TodoSidebar(pane, {
-  onAdd: (text) => {
-    todos = addTodo(todos, newTodo(text, Date.now()));
-    saveTodos(todos);
-    sidebar.render(todos);
-  },
-  onToggle: (id) => {
-    const result = toggleTodo(todos, id);
-    todos = result.todos;
-    saveTodos(todos);
-    sidebar.render(todos);
-    if (result.toggled) {
-      if (result.toggled.to === true) {
-        bumpMotivation(+1);
-        emitTodoCompleted();
-      } else {
-        bumpMotivation(-1);
+const sidebar = new TodoSidebar(
+  pane,
+  {
+    onAdd: (text) => {
+      todos = addTodo(todos, newTodo(text, Date.now()));
+      saveTodos(todos);
+      sidebar.render(todos);
+    },
+    onToggle: (id) => {
+      const result = toggleTodo(todos, id, Date.now());
+      todos = result.todos;
+      saveTodos(todos);
+      sidebar.render(todos);
+      if (result.toggled) {
+        if (result.toggled.to === true) {
+          bumpMotivation(+1);
+          emitTodoCompleted();
+        } else {
+          bumpMotivation(-1);
+        }
       }
-    }
+    },
+    onEdit: (id, text) => {
+      todos = updateTodoText(todos, id, text, Date.now());
+      saveTodos(todos);
+      sidebar.render(todos);
+    },
+    onDelete: (id) => {
+      todos = deleteTodo(todos, id);
+      saveTodos(todos);
+      sidebar.render(todos);
+    },
+    onSortChange: (mode) => {
+      saveSortMode(mode);
+      sidebar.render(todos);
+    },
+    onCollapseChange: (collapsed) => {
+      saveDoneCollapsed(collapsed);
+    },
   },
-  onEdit: (id, text) => {
-    todos = updateTodoText(todos, id, text);
-    saveTodos(todos);
-    sidebar.render(todos);
-  },
-  onDelete: (id) => {
-    todos = deleteTodo(todos, id);
-    saveTodos(todos);
-    sidebar.render(todos);
-  },
-});
+  loadSortMode(),
+  loadDoneCollapsed(),
+);
 sidebar.render(todos);

@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { addTodo, toggleTodo, updateTodoText, deleteTodo } from '../../../src/systems/todoStore';
+import {
+  addTodo,
+  toggleTodo,
+  updateTodoText,
+  deleteTodo,
+  partitionTodos,
+} from '../../../src/systems/todoStore';
 import { newTodo } from '../../../src/domain/todo';
 
 describe('todoStore pure ops', () => {
@@ -10,28 +16,31 @@ describe('todoStore pure ops', () => {
     expect(out).toEqual([t1, t2]);
   });
 
-  it('toggleTodo flips done and returns toggled item', () => {
+  it('toggleTodo flips done, updates updatedAt, returns toggled item', () => {
     const t = newTodo('a', 1);
-    const { todos, toggled } = toggleTodo([t], t.id);
+    const { todos, toggled } = toggleTodo([t], t.id, 100);
     expect(todos[0]!.done).toBe(true);
+    expect(todos[0]!.updatedAt).toBe(100);
     expect(toggled).toEqual({ from: false, to: true });
-    const again = toggleTodo(todos, t.id);
+    const again = toggleTodo(todos, t.id, 200);
     expect(again.todos[0]!.done).toBe(false);
+    expect(again.todos[0]!.updatedAt).toBe(200);
     expect(again.toggled).toEqual({ from: true, to: false });
   });
 
   it('toggleTodo with unknown id returns same list and null', () => {
     const t = newTodo('a', 1);
-    const out = toggleTodo([t], 'nope');
+    const out = toggleTodo([t], 'nope', 100);
     expect(out.todos).toEqual([t]);
     expect(out.toggled).toBeNull();
   });
 
-  it('updateTodoText replaces text trimmed, throws on empty', () => {
+  it('updateTodoText replaces text trimmed, updates updatedAt, throws on empty', () => {
     const t = newTodo('a', 1);
-    const out = updateTodoText([t], t.id, '  new  ');
+    const out = updateTodoText([t], t.id, '  new  ', 100);
     expect(out[0]!.text).toBe('new');
-    expect(() => updateTodoText([t], t.id, '   ')).toThrow();
+    expect(out[0]!.updatedAt).toBe(100);
+    expect(() => updateTodoText([t], t.id, '   ', 100)).toThrow();
   });
 
   it('deleteTodo removes by id', () => {
@@ -44,6 +53,15 @@ describe('todoStore pure ops', () => {
     const t = newTodo('a', 42);
     expect(t.createdAt).toBe(42);
     expect(t.updatedAt).toBe(42);
+  });
+
+  it('partitionTodos splits active and done preserving order', () => {
+    const a = newTodo('a', 1);
+    const b = { ...newTodo('b', 2), done: true };
+    const c = newTodo('c', 3);
+    const { active, done } = partitionTodos([a, b, c]);
+    expect(active).toEqual([a, c]);
+    expect(done).toEqual([b]);
   });
 });
 
@@ -84,5 +102,66 @@ describe('todoStore persistence', () => {
   it('loadTodos returns [] on corrupt JSON', () => {
     localStorage.setItem('village-todos', 'not-json');
     expect(loadTodos()).toEqual([]);
+  });
+
+  it('loadTodos backfills updatedAt for legacy todos', () => {
+    const legacy = [{ id: 'x', text: 'old', done: false, createdAt: 55 }];
+    localStorage.setItem('village-todos', JSON.stringify(legacy));
+    const loaded = loadTodos();
+    expect(loaded[0]!.updatedAt).toBe(55);
+  });
+});
+
+import {
+  loadSortMode,
+  saveSortMode,
+  loadDoneCollapsed,
+  saveDoneCollapsed,
+} from '../../../src/systems/todoStore';
+
+describe('todoStore sort + collapse persistence', () => {
+  let store: Record<string, string>;
+
+  beforeEach(() => {
+    store = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      clear: () => {
+        store = {};
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      length: 0,
+      key: () => null,
+    });
+  });
+
+  it('loadSortMode defaults to created', () => {
+    expect(loadSortMode()).toBe('created');
+  });
+
+  it('saveSortMode + loadSortMode round-trip', () => {
+    saveSortMode('alpha');
+    expect(loadSortMode()).toBe('alpha');
+  });
+
+  it('loadSortMode returns created on unknown value', () => {
+    localStorage.setItem('village-todo-sort', 'garbage');
+    expect(loadSortMode()).toBe('created');
+  });
+
+  it('loadDoneCollapsed defaults to false', () => {
+    expect(loadDoneCollapsed()).toBe(false);
+  });
+
+  it('saveDoneCollapsed + loadDoneCollapsed round-trip', () => {
+    saveDoneCollapsed(true);
+    expect(loadDoneCollapsed()).toBe(true);
+    saveDoneCollapsed(false);
+    expect(loadDoneCollapsed()).toBe(false);
   });
 });
