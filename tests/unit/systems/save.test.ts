@@ -9,7 +9,7 @@ describe('save', () => {
   beforeEach(() => {
     store = {};
     // Mock localStorage
-    global.localStorage = {
+    (globalThis as any).localStorage = {
       getItem: (key: string) => store[key] || null,
       setItem: (key: string, value: string) => {
         store[key] = value;
