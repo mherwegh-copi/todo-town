@@ -19,4 +19,29 @@ describe('catchup', () => {
     const s1 = catchUp(s0, t1);
     expect(s1.progression.day).toBe(30);
   });
+
+  it('decays motivation -1 per 12h elapsed', () => {
+    const t0 = new Date(2026, 4, 20, 0).getTime();
+    const t1 = t0 + 13 * 60 * 60 * 1000;
+    const s0 = { ...emptyState(t0, 1), motivation: 5 };
+    const s1 = catchUp(s0, t1);
+    expect(s1.motivation).toBe(4);
+    expect(s1.motivationLastDecayAt).toBe(t0 + 12 * 60 * 60 * 1000);
+  });
+
+  it('decays motivation multiple steps over long gap', () => {
+    const t0 = new Date(2026, 4, 20, 0).getTime();
+    const t1 = t0 + 25 * 60 * 60 * 1000;
+    const s0 = { ...emptyState(t0, 1), motivation: 5 };
+    const s1 = catchUp(s0, t1);
+    expect(s1.motivation).toBe(3);
+  });
+
+  it('does not decay below 0', () => {
+    const t0 = new Date(2026, 4, 20, 0).getTime();
+    const t1 = t0 + 50 * 60 * 60 * 1000;
+    const s0 = { ...emptyState(t0, 1), motivation: 1 };
+    const s1 = catchUp(s0, t1);
+    expect(s1.motivation).toBe(0);
+  });
 });

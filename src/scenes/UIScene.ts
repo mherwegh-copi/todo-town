@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { ClockWidget } from '../ui/ClockWidget';
 import { StatusBar } from '../ui/StatusBar';
 import { ActionButton } from '../ui/ActionButton';
 import { CardOverlay } from '../ui/CardOverlay';
@@ -11,7 +10,6 @@ import { GameState } from '../domain/state';
 import { WorldScene } from './WorldScene';
 
 export class UIScene extends Phaser.Scene {
-  private clock!: ClockWidget;
   private status!: StatusBar;
   private actionBtn!: ActionButton;
   private overlay!: CardOverlay;
@@ -19,7 +17,6 @@ export class UIScene extends Phaser.Scene {
   constructor() { super('UIScene'); }
 
   create(): void {
-    this.clock = new ClockWidget(this);
     this.status = new StatusBar(this);
     this.actionBtn = new ActionButton(this, () => this.openAction());
     this.overlay = new CardOverlay(this, {
@@ -50,7 +47,6 @@ export class UIScene extends Phaser.Scene {
     const state = this.registry.get('state') as GameState | undefined;
     if (!state) return;
     const now = Date.now();
-    this.clock.update(state.createdAt, now);
     this.status.update(state);
     this.actionBtn.setAvailable(isActionAvailable(state, now));
   }

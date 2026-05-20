@@ -3,6 +3,7 @@ import { BootScene } from './scenes/BootScene';
 import { WorldScene } from './scenes/WorldScene';
 import { UIScene } from './scenes/UIScene';
 import { TodoSidebar } from './ui/TodoSidebar';
+import { SidebarClock } from './ui/SidebarClock';
 import {
   loadTodos,
   saveTodos,
@@ -43,6 +44,13 @@ function emitTodoCompleted(): void {
   const world = game.scene.getScene('WorldScene') as WorldScene | null;
   if (world) world.events.emit('todo-completed');
 }
+
+const clockMount = document.getElementById('clock-mount')!;
+new SidebarClock(clockMount, () => {
+  const world = game.scene.getScene('WorldScene') as WorldScene | null;
+  if (!world || !world.scene.isActive()) return null;
+  return world.getState().createdAt;
+});
 
 const pane = document.getElementById('todo-pane')!;
 let todos: readonly Todo[] = loadTodos();

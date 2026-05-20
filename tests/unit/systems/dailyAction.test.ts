@@ -83,10 +83,10 @@ describe('drawCards motivation', () => {
   });
 });
 
-describe('applyChosenCard resets motivation', () => {
+describe('applyChosenCard motivation cost', () => {
   beforeEach(() => resetIdsForTests());
 
-  it('motivation becomes 0 after picking', () => {
+  it('motivation -10 after picking (clamped at 0)', () => {
     const NOW = 1700000000000;
     const base = initWorld(NOW, 1);
     const s = { ...base, motivation: 4 };
@@ -94,5 +94,15 @@ describe('applyChosenCard resets motivation', () => {
     if (cards.length === 0) return;
     const next = applyChosenCard(s, cards[0]!.id, NOW);
     expect(next.motivation).toBe(0);
+  });
+
+  it('motivation -10 when above threshold', () => {
+    const NOW = 1700000000000;
+    const base = initWorld(NOW, 1);
+    const s = { ...base, motivation: 25 };
+    const cards = drawCards(s, NOW);
+    if (cards.length === 0) return;
+    const next = applyChosenCard(s, cards[0]!.id, NOW);
+    expect(next.motivation).toBe(15);
   });
 });

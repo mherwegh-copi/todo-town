@@ -4,7 +4,7 @@ import { ALL_CARDS, cardById } from '../cards/deck';
 import { createRng, rngInt } from './rng';
 import { computeMetrics } from './progression';
 import { dateKey, hourOfDay } from './clock';
-import { DAY_START_HOUR, BASE_CARDS_DRAWN, MOTIVATION_CARDS_DIV, MOTIVATION_BONUS_CAP } from '../config';
+import { DAY_START_HOUR, BASE_CARDS_DRAWN, MOTIVATION_CARDS_DIV, MOTIVATION_BONUS_CAP, MOTIVATION_ACTION_COST } from '../config';
 
 export function isActionAvailable(state: GameState, now: number): boolean {
   if (hourOfDay(now) < DAY_START_HOUR) return false;
@@ -52,5 +52,6 @@ export function drawCards(state: GameState, now: number): readonly ActionCard[] 
 export function applyChosenCard(state: GameState, cardId: string, now: number): GameState {
   const card = cardById(cardId);
   const after = card.effect(state, now);
-  return { ...after, lastActionDate: dateKey(now), lastSeenAt: now, motivation: 0 };
+  const motivation = Math.max(0, state.motivation - MOTIVATION_ACTION_COST);
+  return { ...after, lastActionDate: dateKey(now), lastSeenAt: now, motivation };
 }

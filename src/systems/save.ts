@@ -18,9 +18,14 @@ export function loadState(): GameState | null {
       console.warn('save version mismatch; ignoring');
       return null;
     }
+    const base = parsed as GameState;
     return {
-      ...(parsed as GameState),
+      ...base,
       motivation: typeof parsed.motivation === 'number' ? parsed.motivation : 0,
+      motivationLastDecayAt:
+        typeof parsed.motivationLastDecayAt === 'number'
+          ? parsed.motivationLastDecayAt
+          : (base.lastSeenAt ?? Date.now()),
     };
   } catch (e) {
     console.error('loadState failed', e);
