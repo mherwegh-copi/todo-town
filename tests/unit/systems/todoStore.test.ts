@@ -165,3 +165,51 @@ describe('todoStore sort + collapse persistence', () => {
     expect(loadDoneCollapsed()).toBe(false);
   });
 });
+
+import { loadDailyGoal, saveDailyGoal } from '../../../src/systems/todoStore';
+
+describe('todoStore daily goal persistence', () => {
+  let store: Record<string, string>;
+
+  beforeEach(() => {
+    store = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      clear: () => {
+        store = {};
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      length: 0,
+      key: () => null,
+    });
+  });
+
+  it('loadDailyGoal defaults to 5', () => {
+    expect(loadDailyGoal()).toBe(5);
+  });
+
+  it('saveDailyGoal + loadDailyGoal round-trip', () => {
+    saveDailyGoal(8);
+    expect(loadDailyGoal()).toBe(8);
+  });
+
+  it('saveDailyGoal clamps above max to 99', () => {
+    saveDailyGoal(500);
+    expect(loadDailyGoal()).toBe(99);
+  });
+
+  it('saveDailyGoal clamps below min to 1', () => {
+    saveDailyGoal(0);
+    expect(loadDailyGoal()).toBe(1);
+  });
+
+  it('loadDailyGoal returns 5 on non-numeric value', () => {
+    localStorage.setItem('village-todo-daily-goal', 'garbage');
+    expect(loadDailyGoal()).toBe(5);
+  });
+});

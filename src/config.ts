@@ -20,3 +20,7 @@ export type Season = (typeof SEASONS)[number];
 export const TODO_STORAGE_KEY = 'village-todos';
 export const TODO_SORT_KEY = 'village-todo-sort';
 export const TODO_DONE_COLLAPSED_KEY = 'village-todo-done-collapsed';
+export const TODO_DAILY_GOAL_KEY = 'village-todo-daily-goal';
+export const DAILY_GOAL_MIN = 1;
+export const DAILY_GOAL_MAX = 99;
+export const DAILY_GOAL_DEFAULT = 5;
