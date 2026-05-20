@@ -3,8 +3,11 @@ import { Villager } from '../../domain/villager';
 import { BUILDING_FOOTPRINT } from '../../domain/building';
 import { DaySchedule, Segment, TileXY } from './types';
 import { mixSeeds, hashStr } from './hash';
+import { buildGraph } from './graph';
+import { findPath } from './astar';
 
 const HOUR_MS = 3_600_000;
+const WALK_MS_PER_TILE = 2000;
 
 function frontageCenter(state: GameState, buildingId: string): TileXY | null {
   const b = state.world.buildings.find((bb) => bb.id === buildingId);
@@ -49,16 +52,44 @@ export function villagerScheduleForDay(v: Villager, day: number, state: GameStat
   }
 
   const { wakeHour, sleepHour } = wakeWindow(v);
-  const segments: Segment[] = [
-    {
-      kind: 'pause',
-      from: home,
-      to: home,
-      path: [home],
-      startMs: wakeHour * HOUR_MS,
-      endMs: sleepHour * HOUR_MS,
-    },
-  ];
+  const graph = buildGraph(state);
+  const segments: Segment[] = [];
+  let cursorMs = wakeHour * HOUR_MS;
+  let here: TileXY = home;
+
+  const pushWalk = (to: TileXY): boolean => {
+    const path = findPath(graph, here, to);
+    if (!path || path.length === 0) return false;
+    const durMs = Math.max(1000, path.length * WALK_MS_PER_TILE);
+    segments.push({ kind: 'walk', from: here, to, path, startMs: cursorMs, endMs: cursorMs + durMs });
+    cursorMs += durMs;
+    here = to;
+    return true;
+  };
+
+  const pushPause = (durMs: number) => {
+    segments.push({ kind: 'pause', from: here, to: here, path: [here], startMs: cursorMs, endMs: cursorMs + durMs });
+    cursorMs += durMs;
+  };
+
+  const workHours = v.schedule.filter((e) => e.activity === 'work');
+  if (workHours.length > 0 && v.workplaceId) {
+    const workStart = Math.max(wakeHour, Math.min(...workHours.map((e) => e.fromHour)));
+    const workEnd = Math.min(sleepHour, Math.max(...workHours.map((e) => e.toHour)));
+    const workTile = frontageCenter(state, v.workplaceId);
+    if (workTile && workEnd > workStart) {
+      const morningPauseMs = workStart * HOUR_MS - cursorMs;
+      if (morningPauseMs > 0) pushPause(morningPauseMs);
+      pushWalk(workTile);
+      const sitMs = workEnd * HOUR_MS - cursorMs;
+      if (sitMs > 0) pushPause(sitMs);
+      pushWalk(home);
+    }
+  }
+
+  const tailMs = sleepHour * HOUR_MS - cursorMs;
+  if (tailMs > 0) pushPause(tailMs);
+
   const ds: DaySchedule = { day, segments };
   perState.set(key, ds);
   return ds;
