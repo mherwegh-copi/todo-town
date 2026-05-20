@@ -4,6 +4,7 @@ import { WorldScene } from './scenes/WorldScene';
 import { UIScene } from './scenes/UIScene';
 import { TodoSidebar } from './ui/TodoSidebar';
 import { SidebarClock } from './ui/SidebarClock';
+import { DailyStats } from './ui/DailyStats';
 import {
   loadTodos,
   saveTodos,
@@ -15,6 +16,8 @@ import {
   saveSortMode,
   loadDoneCollapsed,
   saveDoneCollapsed,
+  loadDailyGoal,
+  saveDailyGoal,
 } from './systems/todoStore';
 import { newTodo } from './domain/todo';
 import type { Todo } from './domain/todo';
@@ -58,6 +61,19 @@ new SidebarClock(clockMount, () => {
 
 const pane = document.getElementById('todo-pane')!;
 let todos: readonly Todo[] = loadTodos();
+let dailyGoal = loadDailyGoal();
+
+const stats = new DailyStats(
+  clockMount,
+  () => todos,
+  () => dailyGoal,
+  (n) => {
+    dailyGoal = n;
+    saveDailyGoal(n);
+    stats.render();
+  },
+);
+
 const sidebar = new TodoSidebar(
   pane,
   {
@@ -65,12 +81,14 @@ const sidebar = new TodoSidebar(
       todos = addTodo(todos, newTodo(text, Date.now()));
       saveTodos(todos);
       sidebar.render(todos);
+      stats.render();
     },
     onToggle: (id) => {
       const result = toggleTodo(todos, id, Date.now());
       todos = result.todos;
       saveTodos(todos);
       sidebar.render(todos);
+      stats.render();
       if (result.toggled) {
         if (result.toggled.to === true) {
           bumpMotivation(+1);
@@ -84,11 +102,13 @@ const sidebar = new TodoSidebar(
       todos = updateTodoText(todos, id, text, Date.now());
       saveTodos(todos);
       sidebar.render(todos);
+      stats.render();
     },
     onDelete: (id) => {
       todos = deleteTodo(todos, id);
       saveTodos(todos);
       sidebar.render(todos);
+      stats.render();
     },
     onSortChange: (mode) => {
       saveSortMode(mode);
