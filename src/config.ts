@@ -18,3 +18,5 @@ export const MOTIVATION_DECAY_HOURS = 12;
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 export type Season = (typeof SEASONS)[number];
 export const TODO_STORAGE_KEY = 'village-todos';
+export const TODO_SORT_KEY = 'village-todo-sort';
+export const TODO_DONE_COLLAPSED_KEY = 'village-todo-done-collapsed';

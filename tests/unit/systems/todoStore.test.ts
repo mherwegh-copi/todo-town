@@ -111,3 +111,57 @@ describe('todoStore persistence', () => {
     expect(loaded[0]!.updatedAt).toBe(55);
   });
 });
+
+import {
+  loadSortMode,
+  saveSortMode,
+  loadDoneCollapsed,
+  saveDoneCollapsed,
+} from '../../../src/systems/todoStore';
+
+describe('todoStore sort + collapse persistence', () => {
+  let store: Record<string, string>;
+
+  beforeEach(() => {
+    store = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      clear: () => {
+        store = {};
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      length: 0,
+      key: () => null,
+    });
+  });
+
+  it('loadSortMode defaults to created', () => {
+    expect(loadSortMode()).toBe('created');
+  });
+
+  it('saveSortMode + loadSortMode round-trip', () => {
+    saveSortMode('alpha');
+    expect(loadSortMode()).toBe('alpha');
+  });
+
+  it('loadSortMode returns created on unknown value', () => {
+    localStorage.setItem('village-todo-sort', 'garbage');
+    expect(loadSortMode()).toBe('created');
+  });
+
+  it('loadDoneCollapsed defaults to false', () => {
+    expect(loadDoneCollapsed()).toBe(false);
+  });
+
+  it('saveDoneCollapsed + loadDoneCollapsed round-trip', () => {
+    saveDoneCollapsed(true);
+    expect(loadDoneCollapsed()).toBe(true);
+    saveDoneCollapsed(false);
+    expect(loadDoneCollapsed()).toBe(false);
+  });
+});

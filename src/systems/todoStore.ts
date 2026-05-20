@@ -1,5 +1,10 @@
 import { Todo } from '../domain/todo';
-import { TODO_STORAGE_KEY } from '../config';
+import {
+  TODO_STORAGE_KEY,
+  TODO_SORT_KEY,
+  TODO_DONE_COLLAPSED_KEY,
+} from '../config';
+import { SortMode } from './todoSort';
 
 export function addTodo(todos: readonly Todo[], todo: Todo): readonly Todo[] {
   return [...todos, todo];
@@ -77,5 +82,32 @@ export function saveTodos(todos: readonly Todo[]): void {
     localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos));
   } catch (e) {
     console.error('saveTodos failed', e);
+  }
+}
+
+const SORT_MODES: readonly SortMode[] = ['created', 'modified', 'alpha'];
+
+export function loadSortMode(): SortMode {
+  const raw = localStorage.getItem(TODO_SORT_KEY);
+  return SORT_MODES.includes(raw as SortMode) ? (raw as SortMode) : 'created';
+}
+
+export function saveSortMode(mode: SortMode): void {
+  try {
+    localStorage.setItem(TODO_SORT_KEY, mode);
+  } catch (e) {
+    console.error('saveSortMode failed', e);
+  }
+}
+
+export function loadDoneCollapsed(): boolean {
+  return localStorage.getItem(TODO_DONE_COLLAPSED_KEY) === 'true';
+}
+
+export function saveDoneCollapsed(collapsed: boolean): void {
+  try {
+    localStorage.setItem(TODO_DONE_COLLAPSED_KEY, String(collapsed));
+  } catch (e) {
+    console.error('saveDoneCollapsed failed', e);
   }
 }
