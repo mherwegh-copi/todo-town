@@ -69,6 +69,30 @@ export class TodoSidebar {
       const label = document.createElement('span');
       label.className = 'todo-label';
       label.textContent = t.text;
+      label.addEventListener('dblclick', () => {
+        const edit = document.createElement('input');
+        edit.type = 'text';
+        edit.className = 'todo-edit';
+        edit.value = t.text;
+        let finished = false;
+        const finish = (commit: boolean): void => {
+          if (finished) return;
+          finished = true;
+          if (commit) {
+            const val = edit.value.trim();
+            if (val.length > 0 && val !== t.text) this.cb.onEdit(t.id, val);
+          }
+          edit.replaceWith(label);
+        };
+        edit.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') finish(true);
+          else if (e.key === 'Escape') finish(false);
+        });
+        edit.addEventListener('blur', () => finish(true));
+        label.replaceWith(edit);
+        edit.focus();
+        edit.select();
+      });
 
       const del = document.createElement('button');
       del.className = 'todo-delete';
