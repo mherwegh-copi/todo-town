@@ -40,6 +40,21 @@ export function deleteTodo(todos: readonly Todo[], id: string): readonly Todo[] 
   return todos.filter((t) => t.id !== id);
 }
 
+export type Partitioned = {
+  readonly active: readonly Todo[];
+  readonly done: readonly Todo[];
+};
+
+export function partitionTodos(todos: readonly Todo[]): Partitioned {
+  const active: Todo[] = [];
+  const done: Todo[] = [];
+  for (const t of todos) {
+    if (t.done) done.push(t);
+    else active.push(t);
+  }
+  return { active, done };
+}
+
 export function loadTodos(): readonly Todo[] {
   const raw = localStorage.getItem(TODO_STORAGE_KEY);
   if (!raw) return [];

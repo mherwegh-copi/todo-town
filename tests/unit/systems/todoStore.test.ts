@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { addTodo, toggleTodo, updateTodoText, deleteTodo } from '../../../src/systems/todoStore';
+import {
+  addTodo,
+  toggleTodo,
+  updateTodoText,
+  deleteTodo,
+  partitionTodos,
+} from '../../../src/systems/todoStore';
 import { newTodo } from '../../../src/domain/todo';
 
 describe('todoStore pure ops', () => {
@@ -47,6 +53,15 @@ describe('todoStore pure ops', () => {
     const t = newTodo('a', 42);
     expect(t.createdAt).toBe(42);
     expect(t.updatedAt).toBe(42);
+  });
+
+  it('partitionTodos splits active and done preserving order', () => {
+    const a = newTodo('a', 1);
+    const b = { ...newTodo('b', 2), done: true };
+    const c = newTodo('c', 3);
+    const { active, done } = partitionTodos([a, b, c]);
+    expect(active).toEqual([a, c]);
+    expect(done).toEqual([b]);
   });
 });
 
