@@ -15,6 +15,13 @@ export const MOTIVATION_BONUS_CAP = 2;
 export const MOTIVATION_ACTION_COST = 10;
 export const MOTIVATION_DECAY_HOURS = 12;
 
+// Construction : points accumulés par todo fermé → ouvertures (tirages).
+export const CONSTRUCTION_BASE_THRESHOLD = 3;
+export const CONSTRUCTION_THRESHOLD_STEP = 2;
+export const OPENINGS_CAP = 5;
+export const CARDS_BASE = 2;
+export const CARDS_MAX = 5;
+
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 export type Season = (typeof SEASONS)[number];
 export const TODO_STORAGE_KEY = 'village-todos';
