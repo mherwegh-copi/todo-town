@@ -49,3 +49,13 @@ export function mergeTodos(
   }
   return [...byId.values()];
 }
+
+/** Retire du cache local les tombstones plus vieux que TOMBSTONE_TTL_MS. */
+export function purgeTombstones(
+  todos: readonly CloudTodo[],
+  now: number,
+): readonly CloudTodo[] {
+  return todos.filter(
+    (t) => !t.deleted || now - t.updatedAt <= TOMBSTONE_TTL_MS,
+  );
+}

@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   mergeTodos,
   mergeStamped,
+  purgeTombstones,
+  TOMBSTONE_TTL_MS,
   type CloudTodo,
   type Stamped,
 } from '../../../../src/systems/cloud/merge';
@@ -51,5 +53,24 @@ describe('mergeStamped', () => {
     const localTie: Stamped<string> = { value: 'local', updatedAt: 10 };
     const remoteTie: Stamped<string> = { value: 'remote', updatedAt: 10 };
     expect(mergeStamped(localTie, remoteTie).value).toBe('remote');
+  });
+});
+
+describe('purgeTombstones', () => {
+  const now = 1_000_000_000_000;
+
+  it('droppe les tombstones plus vieux que la TTL', () => {
+    const old: CloudTodo = todo('a', now - TOMBSTONE_TTL_MS - 1, { deleted: true });
+    expect(purgeTombstones([old], now)).toEqual([]);
+  });
+
+  it('garde les tombstones récents', () => {
+    const fresh: CloudTodo = todo('a', now - 1000, { deleted: true });
+    expect(purgeTombstones([fresh], now)).toHaveLength(1);
+  });
+
+  it('ne droppe jamais un todo actif, même ancien', () => {
+    const oldActive: CloudTodo = todo('a', now - TOMBSTONE_TTL_MS - 1, { deleted: false });
+    expect(purgeTombstones([oldActive], now)).toHaveLength(1);
   });
 });
