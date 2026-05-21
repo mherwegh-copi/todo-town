@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { mergeTodos, type CloudTodo } from '../../../../src/systems/cloud/merge';
+import {
+  mergeTodos,
+  mergeStamped,
+  type CloudTodo,
+  type Stamped,
+} from '../../../../src/systems/cloud/merge';
 
 function todo(id: string, updatedAt: number, over: Partial<CloudTodo> = {}): CloudTodo {
   return { id, text: id, done: false, createdAt: 1, updatedAt, deleted: false, ...over };
@@ -30,5 +35,21 @@ describe('mergeTodos', () => {
   it('en cas d\'égalité de updatedAt, le remote gagne', () => {
     const out = mergeTodos([todo('a', 10, { text: 'local' })], [todo('a', 10, { text: 'remote' })]);
     expect(out[0]!.text).toBe('remote');
+  });
+});
+
+describe('mergeStamped', () => {
+  const a: Stamped<string> = { value: 'local', updatedAt: 10 };
+  const b: Stamped<string> = { value: 'remote', updatedAt: 20 };
+
+  it('garde la valeur au updatedAt le plus grand', () => {
+    expect(mergeStamped(a, b).value).toBe('remote');
+    expect(mergeStamped(b, a).value).toBe('remote');
+  });
+
+  it('en cas d\'égalité, le remote gagne', () => {
+    const localTie: Stamped<string> = { value: 'local', updatedAt: 10 };
+    const remoteTie: Stamped<string> = { value: 'remote', updatedAt: 10 };
+    expect(mergeStamped(localTie, remoteTie).value).toBe('remote');
   });
 });

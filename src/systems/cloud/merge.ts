@@ -25,6 +25,14 @@ export type SyncSnapshot = {
 /** Durée de vie d'un tombstone dans le cache local (30 jours). */
 export const TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
+/** Last-write-wins sur une valeur horodatée. Égalité → remote gagne. */
+export function mergeStamped<T>(
+  local: Stamped<T>,
+  remote: Stamped<T>,
+): Stamped<T> {
+  return remote.updatedAt >= local.updatedAt ? remote : local;
+}
+
 /**
  * Fusionne deux listes de todos par id, last-write-wins sur updatedAt.
  * En cas d'égalité, la version remote gagne (le cloud fait autorité).
