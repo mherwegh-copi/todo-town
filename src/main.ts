@@ -183,7 +183,7 @@ sidebar.render(todos);
 let authState: AuthState = { kind: 'disabled' };
 
 const accountModal = new AccountModal(modalMount, {
-  onChangePassword: (newPassword) => changePassword(newPassword),
+  onChangePassword: changePassword,
   onDeleteAccount: async () => {
     await deleteAccount();
     // Compte supprimé : repli garanti sur l'état déconnecté même si la
