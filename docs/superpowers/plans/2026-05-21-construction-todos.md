@@ -32,9 +32,9 @@ Dans `src/config.ts`, juste après la ligne `export const BASE_CARDS_DRAWN = 3;`
 // Construction : points accumulés par todo fermé → ouvertures (tirages).
 export const CONSTRUCTION_BASE_THRESHOLD = 3;
 export const CONSTRUCTION_THRESHOLD_STEP = 2;
-export const OPENINGS_CAP = 5;
-export const CARDS_BASE = 2;
-export const CARDS_MAX = 5;
+export const CONSTRUCTION_OPENINGS_CAP = 5;
+export const CONSTRUCTION_CARDS_BASE = 2;
+export const CONSTRUCTION_CARDS_MAX = 5;
 ```
 
 - [ ] **Step 2: Vérifier que le projet compile toujours**
@@ -239,9 +239,9 @@ import { GameState } from '../domain/state';
 import {
   CONSTRUCTION_BASE_THRESHOLD,
   CONSTRUCTION_THRESHOLD_STEP,
-  OPENINGS_CAP,
-  CARDS_BASE,
-  CARDS_MAX,
+  CONSTRUCTION_OPENINGS_CAP,
+  CONSTRUCTION_CARDS_BASE,
+  CONSTRUCTION_CARDS_MAX,
 } from '../config';
 
 /** Nombre de todos fermés pour débloquer une ouverture au niveau donné. */
@@ -253,7 +253,7 @@ export function thresholdFor(townHallLevel: number): number {
 /** Nombre de cartes proposées à chaque ouverture au niveau donné. */
 export function poolSizeFor(townHallLevel: number): number {
   const level = Math.max(1, townHallLevel);
-  return Math.min(CARDS_MAX, CARDS_BASE + level);
+  return Math.min(CONSTRUCTION_CARDS_MAX, CONSTRUCTION_CARDS_BASE + level);
 }
 
 /**
@@ -266,7 +266,7 @@ function convert(points: number, openings: number, threshold: number): {
 } {
   let p = points;
   let o = openings;
-  while (p >= threshold && o < OPENINGS_CAP) {
+  while (p >= threshold && o < CONSTRUCTION_OPENINGS_CAP) {
     p -= threshold;
     o += 1;
   }
@@ -380,9 +380,9 @@ import { dateKey, hourOfDay } from './clock';
 import {
   CONSTRUCTION_BASE_THRESHOLD,
   CONSTRUCTION_THRESHOLD_STEP,
-  OPENINGS_CAP,
-  CARDS_BASE,
-  CARDS_MAX,
+  CONSTRUCTION_OPENINGS_CAP,
+  CONSTRUCTION_CARDS_BASE,
+  CONSTRUCTION_CARDS_MAX,
   DAY_START_HOUR,
 } from '../config';
 ```
@@ -402,7 +402,7 @@ export function grantMorningOpening(state: GameState, now: number): GameState {
   if (hourOfDay(now) < DAY_START_HOUR) return state;
   const today = dateKey(now);
   if (state.construction.lastMorningDate === today) return state;
-  const openings = Math.min(OPENINGS_CAP, state.construction.openings + 1);
+  const openings = Math.min(CONSTRUCTION_OPENINGS_CAP, state.construction.openings + 1);
   return {
     ...state,
     construction: { ...state.construction, openings, lastMorningDate: today },
@@ -985,7 +985,7 @@ export class StatusBar {
 
     const tokensY = barY + barH + 6 + 14;
     this.openingsTokens.clear();
-    for (let i = 0; i < OPENINGS_CAP; i++) {
+    for (let i = 0; i < CONSTRUCTION_OPENINGS_CAP; i++) {
       const x = PAD_X + i * (TOKEN_W + TOKEN_GAP);
       const filled = i < state.construction.openings;
       this.openingsTokens.fillStyle(filled ? 0xffd45e : 0x1f1b2b, 1);
