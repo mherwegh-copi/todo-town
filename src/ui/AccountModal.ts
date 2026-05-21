@@ -214,6 +214,8 @@ export class AccountModal {
           this.deleteArmed = false;
           del.textContent = 'Supprimer le compte';
           del.classList.remove('account-modal-delete-armed');
+        })
+        .finally(() => {
           del.disabled = false;
         });
     });
