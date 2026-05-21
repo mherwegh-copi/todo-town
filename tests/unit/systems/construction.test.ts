@@ -4,6 +4,7 @@ import {
   poolSizeFor,
   addPoints,
   consumeOpening,
+  grantMorningOpening,
 } from '../../../src/systems/construction';
 import { emptyState } from '../../../src/domain/state';
 
@@ -88,5 +89,40 @@ describe('consumeOpening', () => {
     const s = consumeOpening(withConstruction(3, 5));
     expect(s.construction.openings).toBe(5);
     expect(s.construction.points).toBe(0);
+  });
+});
+
+describe('grantMorningOpening', () => {
+  const at = (h: number) => new Date(2026, 4, 21, h).getTime();
+
+  it('accorde une ouverture le matin et mémorise la date', () => {
+    const s = grantMorningOpening(withConstruction(0, 0), at(8));
+    expect(s.construction.openings).toBe(1);
+    expect(s.construction.lastMorningDate).toBe('2026-05-21');
+  });
+
+  it('est idempotent dans la même journée', () => {
+    const once = grantMorningOpening(withConstruction(0, 0), at(8));
+    const twice = grantMorningOpening(once, at(11));
+    expect(twice.construction.openings).toBe(1);
+  });
+
+  it('n accorde rien avant 06:00', () => {
+    const s = grantMorningOpening(withConstruction(0, 0), at(5));
+    expect(s.construction.openings).toBe(0);
+    expect(s.construction.lastMorningDate).toBe('');
+  });
+
+  it('respecte le plafond mais mémorise quand même la date du jour', () => {
+    const s = grantMorningOpening(withConstruction(0, 5), at(8));
+    expect(s.construction.openings).toBe(5);
+    expect(s.construction.lastMorningDate).toBe('2026-05-21');
+  });
+
+  it('accorde de nouveau un autre jour', () => {
+    const day1 = grantMorningOpening(withConstruction(0, 0), at(8));
+    const day2 = grantMorningOpening(day1, new Date(2026, 4, 22, 8).getTime());
+    expect(day2.construction.openings).toBe(2);
+    expect(day2.construction.lastMorningDate).toBe('2026-05-22');
   });
 });

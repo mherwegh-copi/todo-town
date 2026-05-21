@@ -1,10 +1,12 @@
 import { GameState } from '../domain/state';
+import { dateKey, hourOfDay } from './clock';
 import {
   CONSTRUCTION_BASE_THRESHOLD,
   CONSTRUCTION_THRESHOLD_STEP,
   CONSTRUCTION_OPENINGS_CAP,
   CONSTRUCTION_CARDS_BASE,
   CONSTRUCTION_CARDS_MAX,
+  DAY_START_HOUR,
 } from '../config';
 
 /** Nombre de todos fermés pour débloquer une ouverture au niveau donné. */
@@ -63,4 +65,21 @@ export function consumeOpening(state: GameState): GameState {
     thresholdFor(state.progression.townHallLevel),
   );
   return { ...state, construction: { ...state.construction, points, openings } };
+}
+
+/**
+ * Accorde l'ouverture garantie du matin si un nouveau jour calendaire a
+ * commencé et que l'heure est >= DAY_START_HOUR. Idempotent dans la journée :
+ * `lastMorningDate` est mis à jour même si la file est pleine, pour ne pas
+ * réessayer en boucle.
+ */
+export function grantMorningOpening(state: GameState, now: number): GameState {
+  if (hourOfDay(now) < DAY_START_HOUR) return state;
+  const today = dateKey(now);
+  if (state.construction.lastMorningDate === today) return state;
+  const openings = Math.min(CONSTRUCTION_OPENINGS_CAP, state.construction.openings + 1);
+  return {
+    ...state,
+    construction: { ...state.construction, openings, lastMorningDate: today },
+  };
 }
