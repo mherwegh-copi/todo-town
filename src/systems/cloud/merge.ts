@@ -59,3 +59,24 @@ export function purgeTombstones(
     (t) => !t.deleted || now - t.updatedAt <= TOMBSTONE_TTL_MS,
   );
 }
+
+/**
+ * Fusionne une photo locale et une photo distante.
+ * - mode 'normal' : LWW partout.
+ * - mode 'login' (connexion depuis un nouvel appareil) : todos fusionnés,
+ *   mais l'état du jeu distant est forcé (un village ne se fusionne pas).
+ */
+export function mergeSnapshots(
+  local: SyncSnapshot,
+  remote: SyncSnapshot,
+  mode: 'normal' | 'login',
+): SyncSnapshot {
+  return {
+    todos: mergeTodos(local.todos, remote.todos),
+    gameState:
+      mode === 'login'
+        ? remote.gameState
+        : mergeStamped(local.gameState, remote.gameState),
+    prefs: mergeStamped(local.prefs, remote.prefs),
+  };
+}

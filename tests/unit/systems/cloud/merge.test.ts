@@ -3,10 +3,13 @@ import {
   mergeTodos,
   mergeStamped,
   purgeTombstones,
+  mergeSnapshots,
   TOMBSTONE_TTL_MS,
   type CloudTodo,
   type Stamped,
+  type SyncSnapshot,
 } from '../../../../src/systems/cloud/merge';
+import type { GameState } from '../../../../src/domain/state';
 
 function todo(id: string, updatedAt: number, over: Partial<CloudTodo> = {}): CloudTodo {
   return { id, text: id, done: false, createdAt: 1, updatedAt, deleted: false, ...over };
@@ -72,5 +75,42 @@ describe('purgeTombstones', () => {
   it('ne droppe jamais un todo actif, même ancien', () => {
     const oldActive: CloudTodo = todo('a', now - TOMBSTONE_TTL_MS - 1, { deleted: false });
     expect(purgeTombstones([oldActive], now)).toHaveLength(1);
+  });
+});
+
+describe('mergeSnapshots', () => {
+  const localGs = { lastSeenAt: 1 } as GameState;
+  const remoteGs = { lastSeenAt: 2 } as GameState;
+
+  function snap(
+    todos: readonly CloudTodo[],
+    gs: GameState | null,
+    gsAt: number,
+  ): SyncSnapshot {
+    return {
+      todos,
+      gameState: { value: gs, updatedAt: gsAt },
+      prefs: {
+        value: { sortMode: 'created', doneCollapsed: false, dailyGoal: 5 },
+        updatedAt: 0,
+      },
+    };
+  }
+
+  it('mode normal : fusionne les todos et applique le LWW sur l\'état du jeu', () => {
+    const local = snap([todo('a', 10)], localGs, 10);
+    const remote = snap([todo('b', 20)], remoteGs, 20);
+    const out = mergeSnapshots(local, remote, 'normal');
+    expect(out.todos.map((t) => t.id).sort()).toEqual(['a', 'b']);
+    expect(out.gameState.value).toBe(remoteGs);
+  });
+
+  it('mode login : todos fusionnés mais état du jeu cloud forcé', () => {
+    // Local plus récent que remote : en mode login, remote gagne quand même.
+    const local = snap([todo('a', 99)], localGs, 99);
+    const remote = snap([todo('b', 1)], remoteGs, 1);
+    const out = mergeSnapshots(local, remote, 'login');
+    expect(out.todos.map((t) => t.id).sort()).toEqual(['a', 'b']);
+    expect(out.gameState.value).toBe(remoteGs);
   });
 });
