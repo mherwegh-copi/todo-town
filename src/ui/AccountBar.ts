@@ -8,6 +8,8 @@ export type AccountBarCallbacks = {
   readonly onLogin: (email: string, password: string) => Promise<void>;
   /** Déconnexion. */
   readonly onLogout: () => Promise<void>;
+  /** Ouvre la popup « Mon compte ». */
+  readonly onOpenAccount: () => void;
 };
 
 type FormMode = 'upgrade' | 'login';
@@ -50,26 +52,36 @@ export class AccountBar {
 
     const id = document.createElement('span');
     id.className = 'account-id';
-    const action = document.createElement('button');
-    action.className = 'account-action';
+    bar.appendChild(id);
 
     if (this.auth.kind === 'permanent') {
       id.textContent = `👤 ${this.auth.email}`;
-      action.textContent = 'Déconnexion';
-      action.addEventListener('click', () => {
+
+      const account = document.createElement('button');
+      account.className = 'account-action';
+      account.textContent = 'Compte';
+      account.addEventListener('click', () => this.cb.onOpenAccount());
+      bar.appendChild(account);
+
+      const logout = document.createElement('button');
+      logout.className = 'account-action';
+      logout.textContent = 'Déconnexion';
+      logout.addEventListener('click', () => {
         void this.cb.onLogout();
       });
+      bar.appendChild(logout);
     } else {
       id.textContent = '👤 Invité';
-      action.textContent = 'Créer un compte';
-      action.addEventListener('click', () => {
+
+      const create = document.createElement('button');
+      create.className = 'account-action';
+      create.textContent = 'Créer un compte';
+      create.addEventListener('click', () => {
         this.formMode = 'upgrade';
         this.render();
       });
+      bar.appendChild(create);
     }
-
-    bar.appendChild(id);
-    bar.appendChild(action);
     return bar;
   }
 

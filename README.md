@@ -32,3 +32,14 @@ Ouvre http://localhost:5173.
 ## Stack
 
 TypeScript + Phaser 4 + Vite + Vitest. Synchronisation optionnelle via Supabase.
+
+## Edge function `delete-account`
+
+Suppression de compte. Déployer une fois le projet Supabase configuré :
+
+```bash
+supabase functions deploy delete-account
+```
+
+Le runtime injecte automatiquement `SUPABASE_URL`, `SUPABASE_ANON_KEY` et
+`SUPABASE_SERVICE_ROLE_KEY` — aucun secret à définir manuellement.

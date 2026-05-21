@@ -24,6 +24,27 @@
       .account-cancel { background: #2a2d34; color: #f0f0f0; }
       .account-error { font-size: 11px; color: #ff5555; }
       .account-toggle { background: none; border: none; color: #8a8f99; font-size: 11px; cursor: pointer; text-decoration: underline; padding: 0; }
+      .account-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
+      .account-modal { width: 340px; max-width: 90vw; background: #1c1f26; color: #f0f0f0; border: 1px solid #2a2d34; border-radius: 8px; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; }
+      .account-modal-header { display: flex; align-items: center; justify-content: space-between; }
+      .account-modal-title { font-size: 16px; font-weight: 600; }
+      .account-modal-close { background: transparent; border: none; color: #8a8f99; font-size: 16px; cursor: pointer; padding: 0 4px; }
+      .account-modal-close:hover { color: #f0f0f0; }
+      .account-modal-email { font-size: 14px; color: #f0f0f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .account-modal-section, .account-modal-danger { display: flex; flex-direction: column; gap: 6px; }
+      .account-modal-danger { border-top: 1px solid #2a2d34; padding-top: 12px; }
+      .account-modal-section-label { font-size: 12px; color: #8a8f99; text-transform: uppercase; letter-spacing: 1px; }
+      .account-modal input { padding: 6px 8px; background: #0e1014; color: #f0f0f0; border: 1px solid #2a2d34; border-radius: 4px; font-size: 13px; font-family: inherit; }
+      .account-modal-pwd-submit { padding: 6px 8px; background: #2d6a4f; color: #fff; border: none; border-radius: 4px; font-size: 12px; font-family: inherit; cursor: pointer; }
+      .account-modal-pwd-submit:hover { background: #38875e; }
+      .account-modal-pwd-submit:disabled { opacity: 0.5; cursor: default; }
+      .account-modal-pwd-error { font-size: 11px; color: #ff5555; }
+      .account-modal-pwd-error.account-modal-ok { color: #38875e; }
+      .account-modal-sync { font-size: 13px; color: #8a8f99; }
+      .account-modal-delete { padding: 6px 8px; background: transparent; color: #ff5555; border: 1px solid #5a2d2d; border-radius: 4px; font-size: 12px; font-family: inherit; cursor: pointer; }
+      .account-modal-delete:hover { border-color: #ff5555; }
+      .account-modal-delete-armed { background: #ff5555; color: #fff; }
+      .account-modal-delete-error { font-size: 11px; color: #ff5555; }
       #game { flex: 1 1 auto; min-width: 0; }
 
       .clock-bar { padding: 16px 16px 12px; border-bottom: 1px solid #2a2d34; background: linear-gradient(180deg, #1c1f26 0%, #16181d 100%); text-align: center; }
@@ -66,6 +87,7 @@
       </div>
       <div id="game"></div>
     </div>
+    <div id="modal-mount"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
