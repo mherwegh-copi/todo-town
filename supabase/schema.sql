@@ -2,13 +2,17 @@
 -- L'authentification anonyme doit être activée : Authentication > Providers > Anonymous.
 
 create table if not exists public.todos (
-  id text primary key,
+  id text not null,
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   text text not null,
   done boolean not null default false,
   created_at bigint not null,
   updated_at bigint not null,
-  deleted boolean not null default false
+  deleted boolean not null default false,
+  -- PK composite : les id de todo (todo-<ts>-<n>) ne sont uniques que par
+  -- navigateur. Sans user_id dans la clé, deux comptes peuvent entrer en
+  -- collision et perdre des todos en silence à l'upsert.
+  primary key (user_id, id)
 );
 alter table public.todos enable row level security;
 create policy "todos owner access" on public.todos

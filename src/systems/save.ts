@@ -18,7 +18,12 @@ export function saveState(state: GameState): void {
   } catch (e) {
     console.error('saveState failed', e);
   }
-  saveListener?.(state);
+  // Le listener cloud ne doit jamais faire échouer une sauvegarde locale.
+  try {
+    saveListener?.(state);
+  } catch (e) {
+    console.warn('saveState listener failed', e);
+  }
 }
 
 export function loadState(): GameState | null {
