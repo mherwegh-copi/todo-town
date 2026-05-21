@@ -26,6 +26,14 @@ export type CloudSyncCallbacks = {
   readonly onPrefsMerged: (prefs: CloudPrefs) => void;
 };
 
+/** État de synchronisation cloud exposé à l'UI. */
+export type CloudStatus = {
+  /** Vrai si Supabase est configuré (sinon l'app reste en local pur). */
+  readonly configured: boolean;
+  /** Horodatage (ms epoch) de la dernière synchro réussie, 0 si aucune. */
+  readonly lastSyncAt: number;
+};
+
 /** API du moteur de sync exposée à main.ts. */
 export type CloudSync = {
   readonly pullAndMerge: (mode: PullMode) => Promise<void>;
@@ -33,6 +41,7 @@ export type CloudSync = {
   readonly pushTodoDelete: (id: string, now: number) => void;
   readonly pushGameState: (state: GameState) => void;
   readonly pushPrefs: (prefs: CloudPrefs) => void;
+  readonly getStatus: () => CloudStatus;
 };
 
 type TodoRow = {
@@ -110,6 +119,7 @@ export function createCloudSync(cb: CloudSyncCallbacks): CloudSync {
     pushTodoDelete: () => {},
     pushGameState: () => {},
     pushPrefs: () => {},
+    getStatus: () => ({ configured: false, lastSyncAt: 0 }),
   };
   if (!supabase) return noop;
   const db = supabase;
@@ -118,6 +128,7 @@ export function createCloudSync(cb: CloudSyncCallbacks): CloudSync {
   let pendingTodos: CloudTodo[] = [];
   let pendingGameState: { state: GameState; updatedAt: number } | null = null;
   let pendingPrefs: { prefs: CloudPrefs; updatedAt: number } | null = null;
+  let lastSyncAt = 0;
 
   function localSnapshot(): SyncSnapshot {
     const gs = cb.getLocalGameState();
@@ -236,6 +247,7 @@ export function createCloudSync(cb: CloudSyncCallbacks): CloudSync {
         const merged = mergeSnapshots(localSnapshot(), remote, mode);
         applyMerged(merged, now);
         await pushSnapshot(merged);
+        lastSyncAt = now;
       } catch (e) {
         console.warn('cloud pull failed', e);
       }
@@ -277,6 +289,10 @@ export function createCloudSync(cb: CloudSyncCallbacks): CloudSync {
       pendingPrefs = { prefs, updatedAt };
       savePrefsUpdatedAt(updatedAt);
       scheduleFlush();
+    },
+
+    getStatus(): CloudStatus {
+      return { configured: true, lastSyncAt };
     },
   };
 }
