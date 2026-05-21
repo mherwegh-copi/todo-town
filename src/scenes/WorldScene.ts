@@ -18,6 +18,7 @@ import { MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, RENDER_SCALE, SIM_TICK_MS } from '../
 import { BUILDING_FOOTPRINT, BuildingKind } from '../domain/building';
 import { findFreeSpot, isFootprintFree } from '../systems/worldOps';
 import { PlacementController } from '../systems/placement/PlacementController';
+import { addPoints } from '../systems/construction';
 
 export class WorldScene extends Phaser.Scene {
   private state!: GameState;
@@ -168,8 +169,8 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
-  bumpMotivation(delta: number): GameState {
-    const next = { ...this.state, motivation: Math.max(0, this.state.motivation + delta) };
+  addConstructionPoints(delta: number): GameState {
+    const next = addPoints(this.state, delta);
     this.state = next;
     this.registry.set('state', next);
     saveState(next);
