@@ -5,7 +5,7 @@ import { CardOverlay } from '../ui/CardOverlay';
 import { Tooltip } from '../ui/Tooltip';
 import { DebugButton } from '../ui/DebugButton';
 import { TilePicker } from '../ui/TilePicker';
-import { drawCards, applyChosenCard, isActionAvailable } from '../systems/dailyAction';
+import { drawCards, applyChosenCard } from '../systems/dailyAction';
 import { cardById } from '../cards/deck';
 import { ActionCard } from '../cards/types';
 import { GameState } from '../domain/state';
@@ -50,17 +50,15 @@ export class UIScene extends Phaser.Scene {
   update(): void {
     const state = this.registry.get('state') as GameState | undefined;
     if (!state) return;
-    const now = Date.now();
     this.status.update(state);
-    this.actionBtn.setAvailable(isActionAvailable(state, now));
+    this.actionBtn.setAvailable(state.construction.openings > 0, state.construction.openings);
   }
 
   private openAction(): void {
     const state = this.registry.get('state') as GameState | undefined;
     if (!state) return;
-    const now = Date.now();
-    if (!isActionAvailable(state, now)) return;
-    const cards = drawCards(state, now);
+    if (state.construction.openings <= 0) return;
+    const cards = drawCards(state, Date.now());
     if (cards.length === 0) return;
     this.drawnCards = cards;
     this.overlay.show(cards);
