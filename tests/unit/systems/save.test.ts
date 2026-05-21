@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { saveState, loadState, clearSave } from '../../../src/systems/save';
 import { emptyState } from '../../../src/domain/state';
 import { SAVE_KEY, SAVE_VERSION } from '../../../src/config';
@@ -8,7 +8,6 @@ describe('save', () => {
 
   beforeEach(() => {
     store = {};
-    // Mock localStorage
     (globalThis as any).localStorage = {
       getItem: (key: string) => store[key] || null,
       setItem: (key: string, value: string) => {
@@ -28,8 +27,7 @@ describe('save', () => {
   it('save+load roundtrips state', () => {
     const s = emptyState(0, 42);
     saveState(s);
-    const loaded = loadState();
-    expect(loaded).toEqual(s);
+    expect(loadState()).toEqual(s);
   });
 
   it('returns null when nothing saved', () => {
@@ -47,29 +45,36 @@ describe('save', () => {
     expect(loadState()).toBeNull();
   });
 
+  it('returns null on version mismatch', () => {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION - 1 }));
+    expect(loadState()).toBeNull();
+  });
+
   it('clearSave removes data', () => {
     saveState(emptyState(0, 1));
     clearSave();
     expect(loadState()).toBeNull();
   });
 
-  it('loads state and defaults motivation to 0 when missing', () => {
+  it('défaut le bloc construction quand il manque', () => {
     const base = emptyState(1, 42);
-    const { motivation: _drop, ...withoutMotivation } = base;
-    localStorage.setItem(SAVE_KEY, JSON.stringify(withoutMotivation));
+    const { construction: _drop, ...withoutConstruction } = base;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(withoutConstruction));
     const loaded = loadState();
     expect(loaded).not.toBeNull();
-    expect(loaded!.motivation).toBe(0);
+    expect(loaded!.construction).toEqual({ points: 0, openings: 0, lastMorningDate: '' });
   });
 
-  it('preserves motivation when present', () => {
-    const s = { ...emptyState(1, 42), motivation: 5 };
+  it('préserve le bloc construction présent', () => {
+    const s = {
+      ...emptyState(1, 42),
+      construction: { points: 2, openings: 1, lastMorningDate: '2026-05-21' },
+    };
     saveState(s);
-    expect(loadState()!.motivation).toBe(5);
-  });
-
-  it('returns null on version mismatch', () => {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION - 1 }));
-    expect(loadState()).toBeNull();
+    expect(loadState()!.construction).toEqual({
+      points: 2,
+      openings: 1,
+      lastMorningDate: '2026-05-21',
+    });
   });
 });
