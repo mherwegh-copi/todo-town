@@ -186,7 +186,13 @@ const accountModal = new AccountModal(modalMount, {
   onChangePassword: (newPassword) => changePassword(newPassword),
   onDeleteAccount: async () => {
     await deleteAccount();
-    applyAuth(await logout());
+    // Compte supprimé : repli garanti sur l'état déconnecté même si la
+    // déconnexion échoue (le compte distant n'existe plus de toute façon).
+    try {
+      applyAuth(await logout());
+    } catch {
+      applyAuth({ kind: 'disabled' });
+    }
     await cloud.pullAndMerge('normal');
   },
   getSyncStatus: () => cloud.getStatus(),
