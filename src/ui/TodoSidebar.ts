@@ -177,4 +177,12 @@ export class TodoSidebar {
     this.doneHeader.textContent = `${this.doneCollapsed ? '▸' : '▾'} Terminées (${sortedDone.length})`;
     this.applyCollapsed();
   }
+
+  /** Applique des préférences arrivées par synchronisation cloud. */
+  setPrefs(sortMode: SortMode, doneCollapsed: boolean): void {
+    this.sortMode = sortMode;
+    this.sortSelect.value = sortMode;
+    this.doneCollapsed = doneCollapsed;
+    this.applyCollapsed();
+  }
 }
