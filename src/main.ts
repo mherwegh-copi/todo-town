@@ -5,6 +5,7 @@ import { UIScene } from './scenes/UIScene';
 import { TodoSidebar } from './ui/TodoSidebar';
 import { SidebarClock } from './ui/SidebarClock';
 import { DailyStats } from './ui/DailyStats';
+import { AccountBar } from './ui/AccountBar';
 import {
   loadTodos,
   saveTodos,
@@ -21,6 +22,16 @@ import {
 } from './systems/todoStore';
 import { newTodo } from './domain/todo';
 import type { Todo } from './domain/todo';
+import type { GameState } from './domain/state';
+import { setSaveListener } from './systems/save';
+import { createCloudSync } from './systems/cloud/sync';
+import type { CloudPrefs } from './systems/cloud/merge';
+import {
+  ensureSession,
+  upgradeAccount,
+  login,
+  logout,
+} from './systems/cloud/auth';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -33,14 +44,14 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const game = new Phaser.Game(config);
 
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) game.loop.sleep();
-  else game.loop.wake();
-});
+function getWorld(): WorldScene | null {
+  const world = game.scene.getScene('WorldScene') as WorldScene | null;
+  return world && world.scene.isActive() ? world : null;
+}
 
 function bumpMotivation(delta: number): void {
-  const world = game.scene.getScene('WorldScene') as WorldScene | null;
-  if (!world || !world.scene.isActive()) {
+  const world = getWorld();
+  if (!world) {
     console.warn('bumpMotivation: WorldScene not ready, skipping');
     return;
   }
@@ -48,20 +59,26 @@ function bumpMotivation(delta: number): void {
 }
 
 function emitTodoCompleted(): void {
-  const world = game.scene.getScene('WorldScene') as WorldScene | null;
+  const world = getWorld();
   if (world) world.events.emit('todo-completed');
 }
 
 const clockMount = document.getElementById('clock-mount')!;
 new SidebarClock(clockMount, () => {
-  const world = game.scene.getScene('WorldScene') as WorldScene | null;
-  if (!world || !world.scene.isActive()) return null;
-  return world.getState().createdAt;
+  const world = getWorld();
+  return world ? world.getState().createdAt : null;
 });
 
 const pane = document.getElementById('todo-pane')!;
+const accountMount = document.getElementById('account-mount')!;
 let todos: readonly Todo[] = loadTodos();
 let dailyGoal = loadDailyGoal();
+let sortMode = loadSortMode();
+let doneCollapsed = loadDoneCollapsed();
+
+function currentPrefs(): CloudPrefs {
+  return { sortMode, doneCollapsed, dailyGoal };
+}
 
 const stats = new DailyStats(
   clockMount,
@@ -71,8 +88,35 @@ const stats = new DailyStats(
     dailyGoal = n;
     saveDailyGoal(n);
     stats.render();
+    cloud.pushPrefs(currentPrefs());
   },
 );
+
+const cloud = createCloudSync({
+  getLocalTodos: () => todos,
+  getLocalGameState: () => getWorld()?.getState() ?? null,
+  getLocalPrefs: currentPrefs,
+  onTodosMerged: (merged) => {
+    todos = merged;
+    saveTodos(todos);
+    sidebar.render(todos);
+    stats.render();
+  },
+  onGameStateMerged: (state: GameState) => {
+    getWorld()?.refresh(state);
+  },
+  onPrefsMerged: (prefs) => {
+    sortMode = prefs.sortMode;
+    doneCollapsed = prefs.doneCollapsed;
+    dailyGoal = prefs.dailyGoal;
+    saveSortMode(sortMode);
+    saveDoneCollapsed(doneCollapsed);
+    saveDailyGoal(dailyGoal);
+    sidebar.setPrefs(sortMode, doneCollapsed);
+    sidebar.render(todos);
+    stats.render();
+  },
+});
 
 const sidebar = new TodoSidebar(
   pane,
@@ -82,6 +126,7 @@ const sidebar = new TodoSidebar(
       saveTodos(todos);
       sidebar.render(todos);
       stats.render();
+      cloud.pushTodos(todos);
     },
     onToggle: (id) => {
       const result = toggleTodo(todos, id, Date.now());
@@ -89,6 +134,7 @@ const sidebar = new TodoSidebar(
       saveTodos(todos);
       sidebar.render(todos);
       stats.render();
+      cloud.pushTodos(todos);
       if (result.toggled) {
         if (result.toggled.to === true) {
           bumpMotivation(+1);
@@ -103,22 +149,60 @@ const sidebar = new TodoSidebar(
       saveTodos(todos);
       sidebar.render(todos);
       stats.render();
+      cloud.pushTodos(todos);
     },
     onDelete: (id) => {
       todos = deleteTodo(todos, id);
       saveTodos(todos);
       sidebar.render(todos);
       stats.render();
+      cloud.pushTodoDelete(id, Date.now());
     },
     onSortChange: (mode) => {
+      sortMode = mode;
       saveSortMode(mode);
       sidebar.render(todos);
+      cloud.pushPrefs(currentPrefs());
     },
     onCollapseChange: (collapsed) => {
+      doneCollapsed = collapsed;
       saveDoneCollapsed(collapsed);
+      cloud.pushPrefs(currentPrefs());
     },
   },
-  loadSortMode(),
-  loadDoneCollapsed(),
+  sortMode,
+  doneCollapsed,
 );
 sidebar.render(todos);
+
+const accountBar = new AccountBar(accountMount, {
+  onUpgrade: async (email, password) => {
+    accountBar.setAuth(await upgradeAccount(email, password));
+  },
+  onLogin: async (email, password) => {
+    accountBar.setAuth(await login(email, password));
+    await cloud.pullAndMerge('login');
+  },
+  onLogout: async () => {
+    accountBar.setAuth(await logout());
+    await cloud.pullAndMerge('normal');
+  },
+});
+
+// Pousse l'état du jeu vers le cloud à chaque sauvegarde de WorldScene.
+setSaveListener((state) => cloud.pushGameState(state));
+
+// Sync initiale : session anonyme garantie, puis pull/merge.
+void (async () => {
+  accountBar.setAuth(await ensureSession());
+  await cloud.pullAndMerge('normal');
+})();
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    game.loop.sleep();
+  } else {
+    game.loop.wake();
+    void cloud.pullAndMerge('normal');
+  }
+});
