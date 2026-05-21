@@ -23,6 +23,11 @@ export type GameState = {
     readonly townHallLevel: number;
     readonly unlockedCards: readonly string[];
   };
+  readonly construction: {
+    readonly points: number;
+    readonly openings: number;
+    readonly lastMorningDate: string;
+  };
   readonly motivation: number;
   readonly motivationLastDecayAt: number;
 };
@@ -42,6 +47,7 @@ export function emptyState(now: number, seed: number): GameState {
     seed,
     world: { width: MAP_WIDTH, height: MAP_HEIGHT, tiles, buildings: [], crops: [], villagers: [] },
     progression: { day: 0, townHallLevel: 1, unlockedCards: [] },
+    construction: { points: 0, openings: 0, lastMorningDate: '' },
     motivation: 0,
     motivationLastDecayAt: now,
   };
