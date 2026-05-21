@@ -20,6 +20,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.106.1",
     "phaser": "^4.1.0"
   },
   "devDependencies": {
