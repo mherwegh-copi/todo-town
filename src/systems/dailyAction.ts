@@ -1,7 +1,7 @@
 import { GameState } from '../domain/state';
 import { ActionCard } from '../cards/types';
 import { ALL_CARDS, cardById } from '../cards/deck';
-import { createRng, rngInt } from './rng';
+import { createRng } from './rng';
 import { computeMetrics } from './progression';
 import { poolSizeFor, consumeOpening } from './construction';
 
@@ -38,7 +38,6 @@ export function drawCards(state: GameState, now: number): readonly ActionCard[] 
     picked.push(remaining[idx]!);
     remaining.splice(idx, 1);
   }
-  void rngInt;
   return picked;
 }
 
