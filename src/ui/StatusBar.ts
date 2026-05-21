@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { GameState } from '../domain/state';
 import { weatherForDay } from '../systems/weather';
 import { seasonForDay } from '../systems/season';
+import { thresholdFor } from '../systems/construction';
+import { CONSTRUCTION_OPENINGS_CAP } from '../config';
 
 const WEATHER_LABEL_FR: Record<string, string> = {
   clear: 'beau',
@@ -39,15 +41,21 @@ const ROW_H = 18;
 const WIDTH = 240;
 const FONT = 'system-ui, -apple-system, sans-serif';
 
+const TOKEN_W = 14;
+const TOKEN_H = 16;
+const TOKEN_GAP = 6;
+
 export class StatusBar {
   private container: Phaser.GameObjects.Container;
   private bg: Phaser.GameObjects.Graphics;
   private title: Phaser.GameObjects.Text;
   private rows: Phaser.GameObjects.Text[] = [];
-  private motivationLabel: Phaser.GameObjects.Text;
-  private motivationBarBg: Phaser.GameObjects.Graphics;
-  private motivationBarFill: Phaser.GameObjects.Graphics;
-  private motivationValue: Phaser.GameObjects.Text;
+  private chantierLabel: Phaser.GameObjects.Text;
+  private chantierValue: Phaser.GameObjects.Text;
+  private chantierBarBg: Phaser.GameObjects.Graphics;
+  private chantierBarFill: Phaser.GameObjects.Graphics;
+  private openingsLabel: Phaser.GameObjects.Text;
+  private openingsTokens: Phaser.GameObjects.Graphics;
 
   constructor(private scene: Phaser.Scene) {
     this.container = scene.add.container(MARGIN, MARGIN).setScrollFactor(0).setDepth(1000);
@@ -69,23 +77,32 @@ export class StatusBar {
       this.container.add(t);
     }
 
-    const motivationY = PAD_Y + 22 + 5 * ROW_H + 8;
-    this.motivationLabel = scene.add.text(PAD_X, motivationY, 'MOTIVATION', {
+    const chantierY = PAD_Y + 22 + 5 * ROW_H + 8;
+    this.chantierLabel = scene.add.text(PAD_X, chantierY, 'CHANTIER', {
       fontFamily: FONT, fontSize: '10px', color: '#8a8f99',
     });
-    this.motivationLabel.setLetterSpacing(1);
-    this.container.add(this.motivationLabel);
+    this.chantierLabel.setLetterSpacing(1);
+    this.container.add(this.chantierLabel);
 
-    this.motivationValue = scene.add.text(WIDTH - PAD_X, motivationY, '0', {
+    this.chantierValue = scene.add.text(WIDTH - PAD_X, chantierY, '0/3', {
       fontFamily: FONT, fontSize: '12px', color: '#f0f0f0',
     }).setOrigin(1, 0);
-    this.container.add(this.motivationValue);
+    this.container.add(this.chantierValue);
 
-    this.motivationBarBg = scene.add.graphics();
-    this.motivationBarFill = scene.add.graphics();
-    this.container.add(this.motivationBarBg);
-    this.container.add(this.motivationBarFill);
+    this.chantierBarBg = scene.add.graphics();
+    this.chantierBarFill = scene.add.graphics();
+    this.container.add(this.chantierBarBg);
+    this.container.add(this.chantierBarFill);
 
+    const openingsY = chantierY + 16 + 6 + 12;
+    this.openingsLabel = scene.add.text(PAD_X, openingsY, 'OUVERTURES PRÊTES', {
+      fontFamily: FONT, fontSize: '10px', color: '#8a8f99',
+    });
+    this.openingsLabel.setLetterSpacing(1);
+    this.container.add(this.openingsLabel);
+
+    this.openingsTokens = scene.add.graphics();
+    this.container.add(this.openingsTokens);
   }
 
   update(state: GameState): void {
@@ -111,28 +128,38 @@ export class StatusBar {
       this.rows[i]!.setText(lines[i] ?? '');
     }
 
-    const m = Math.max(0, state.motivation);
-    const cap = 12;
-    const ratio = Math.min(1, m / cap);
-    this.motivationValue.setText(String(m));
+    const threshold = thresholdFor(state.progression.townHallLevel);
+    const points = state.construction.points;
+    const ratio = threshold > 0 ? Math.min(1, points / threshold) : 0;
+    this.chantierValue.setText(`${points}/${threshold} tâches`);
 
-    const motivationY = PAD_Y + 22 + 5 * ROW_H + 8;
-    const barY = motivationY + 16;
+    const chantierY = PAD_Y + 22 + 5 * ROW_H + 8;
+    const barY = chantierY + 16;
     const barW = WIDTH - PAD_X * 2;
-    const barH = 6;
+    const barH = 8;
 
-    this.motivationBarBg.clear();
-    this.motivationBarBg.fillStyle(0x2a2d34, 1);
-    this.motivationBarBg.fillRoundedRect(PAD_X, barY, barW, barH, 3);
+    this.chantierBarBg.clear();
+    this.chantierBarBg.fillStyle(0x2a2d34, 1);
+    this.chantierBarBg.fillRoundedRect(PAD_X, barY, barW, barH, 3);
 
-    this.motivationBarFill.clear();
-    const color = ratio < 0.34 ? 0xd64545 : ratio < 0.67 ? 0xe2a93b : 0x4caf6d;
+    this.chantierBarFill.clear();
     if (ratio > 0) {
-      this.motivationBarFill.fillStyle(color, 1);
-      this.motivationBarFill.fillRoundedRect(PAD_X, barY, Math.max(2, barW * ratio), barH, 3);
+      this.chantierBarFill.fillStyle(0xf0a500, 1);
+      this.chantierBarFill.fillRoundedRect(PAD_X, barY, Math.max(2, barW * ratio), barH, 3);
     }
 
-    const totalH = barY + barH + PAD_Y;
+    const tokensY = barY + barH + 6 + 22;
+    this.openingsTokens.clear();
+    for (let i = 0; i < CONSTRUCTION_OPENINGS_CAP; i++) {
+      const x = PAD_X + i * (TOKEN_W + TOKEN_GAP);
+      const filled = i < state.construction.openings;
+      this.openingsTokens.fillStyle(filled ? 0xffd45e : 0x1f1b2b, 1);
+      this.openingsTokens.fillRoundedRect(x, tokensY, TOKEN_W, TOKEN_H, 3);
+      this.openingsTokens.lineStyle(1.5, filled ? 0xf0a500 : 0x4a4360, 1);
+      this.openingsTokens.strokeRoundedRect(x, tokensY, TOKEN_W, TOKEN_H, 3);
+    }
+
+    const totalH = tokensY + TOKEN_H + PAD_Y;
     this.bg.clear();
     this.bg.fillStyle(0x16181d, 0.88);
     this.bg.fillRoundedRect(0, 0, WIDTH, totalH, 8);

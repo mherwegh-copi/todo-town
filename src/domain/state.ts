@@ -8,7 +8,6 @@ export type GameState = {
   readonly version: number;
   readonly createdAt: number;
   readonly lastSeenAt: number;
-  readonly lastActionDate: string;
   readonly seed: number;
   readonly world: {
     readonly width: number;
@@ -23,8 +22,11 @@ export type GameState = {
     readonly townHallLevel: number;
     readonly unlockedCards: readonly string[];
   };
-  readonly motivation: number;
-  readonly motivationLastDecayAt: number;
+  readonly construction: {
+    readonly points: number;
+    readonly openings: number;
+    readonly lastMorningDate: string;
+  };
 };
 
 export function emptyState(now: number, seed: number): GameState {
@@ -38,11 +40,9 @@ export function emptyState(now: number, seed: number): GameState {
     version: SAVE_VERSION,
     createdAt: now,
     lastSeenAt: now,
-    lastActionDate: '',
     seed,
     world: { width: MAP_WIDTH, height: MAP_HEIGHT, tiles, buildings: [], crops: [], villagers: [] },
     progression: { day: 0, townHallLevel: 1, unlockedCards: [] },
-    motivation: 0,
-    motivationLastDecayAt: now,
+    construction: { points: 0, openings: 0, lastMorningDate: '' },
   };
 }

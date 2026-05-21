@@ -30,7 +30,10 @@ export function loadState(): GameState | null {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as Partial<GameState> & { version?: number };
+    const parsed = JSON.parse(raw) as Partial<GameState> & {
+      version?: number;
+      construction?: GameState['construction'];
+    };
     if (parsed.version !== SAVE_VERSION) {
       console.warn('save version mismatch; ignoring');
       return null;
@@ -38,11 +41,7 @@ export function loadState(): GameState | null {
     const base = parsed as GameState;
     return {
       ...base,
-      motivation: typeof parsed.motivation === 'number' ? parsed.motivation : 0,
-      motivationLastDecayAt:
-        typeof parsed.motivationLastDecayAt === 'number'
-          ? parsed.motivationLastDecayAt
-          : (base.lastSeenAt ?? Date.now()),
+      construction: parsed.construction ?? { points: 0, openings: 0, lastMorningDate: '' },
     };
   } catch (e) {
     console.error('loadState failed', e);

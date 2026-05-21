@@ -53,13 +53,13 @@ function getWorld(): WorldScene | null {
   return world && world.scene.isActive() ? world : null;
 }
 
-function bumpMotivation(delta: number): void {
+function addConstructionPoints(delta: number): void {
   const world = getWorld();
   if (!world) {
-    console.warn('bumpMotivation: WorldScene not ready, skipping');
+    console.warn('addConstructionPoints: WorldScene not ready, skipping');
     return;
   }
-  world.bumpMotivation(delta);
+  world.addConstructionPoints(delta);
 }
 
 function emitTodoCompleted(): void {
@@ -142,10 +142,10 @@ const sidebar = new TodoSidebar(
       cloud.pushTodos(todos);
       if (result.toggled) {
         if (result.toggled.to === true) {
-          bumpMotivation(+1);
+          addConstructionPoints(+1);
           emitTodoCompleted();
         } else {
-          bumpMotivation(-1);
+          addConstructionPoints(-1);
         }
       }
     },

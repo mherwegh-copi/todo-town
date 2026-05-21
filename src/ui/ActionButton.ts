@@ -25,12 +25,12 @@ export class ActionButton {
     this.dot = scene.add.graphics();
     this.container.add(this.dot);
 
-    this.label = scene.add.text(34, 8, 'Action du jour', {
-      fontFamily: FONT, fontSize: '14px', fontStyle: 'bold', color: '#fff8e0',
+    this.label = scene.add.text(34, 8, 'Ouverture du chantier', {
+      fontFamily: FONT, fontSize: '13px', fontStyle: 'bold', color: '#fff8e0',
     });
     this.container.add(this.label);
 
-    this.sub = scene.add.text(34, 25, 'cliquer pour piocher', {
+    this.sub = scene.add.text(34, 25, '', {
       fontFamily: FONT, fontSize: '11px', color: '#e5c98a',
     });
     this.container.add(this.sub);
@@ -86,8 +86,9 @@ export class ActionButton {
     this.dot.fillCircle(18, 22, 5);
   }
 
-  setAvailable(available: boolean): void {
+  setAvailable(available: boolean, count = 0): void {
     this.container.setVisible(available);
+    this.sub.setText(count > 1 ? `${count} ouvertures en attente` : 'cliquer pour piocher');
     if (this.pulse) {
       if (available) this.pulse.resume();
       else this.pulse.pause();
