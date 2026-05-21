@@ -78,7 +78,7 @@ export class StatusBar {
     }
 
     const chantierY = PAD_Y + 22 + 5 * ROW_H + 8;
-    this.chantierLabel = scene.add.text(PAD_X, chantierY, '🔨 CHANTIER', {
+    this.chantierLabel = scene.add.text(PAD_X, chantierY, 'CHANTIER', {
       fontFamily: FONT, fontSize: '10px', color: '#8a8f99',
     });
     this.chantierLabel.setLetterSpacing(1);
@@ -148,7 +148,7 @@ export class StatusBar {
       this.chantierBarFill.fillRoundedRect(PAD_X, barY, Math.max(2, barW * ratio), barH, 3);
     }
 
-    const tokensY = barY + barH + 6 + 14;
+    const tokensY = barY + barH + 6 + 22;
     this.openingsTokens.clear();
     for (let i = 0; i < CONSTRUCTION_OPENINGS_CAP; i++) {
       const x = PAD_X + i * (TOKEN_W + TOKEN_GAP);
