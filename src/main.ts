@@ -6,6 +6,7 @@ import { TodoSidebar } from './ui/TodoSidebar';
 import { SidebarClock } from './ui/SidebarClock';
 import { DailyStats } from './ui/DailyStats';
 import { AccountBar } from './ui/AccountBar';
+import { AccountModal } from './ui/AccountModal';
 import {
   loadTodos,
   saveTodos,
@@ -31,7 +32,10 @@ import {
   upgradeAccount,
   login,
   logout,
+  changePassword,
+  deleteAccount,
 } from './systems/cloud/auth';
+import type { AuthState } from './systems/cloud/auth';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -71,6 +75,7 @@ new SidebarClock(clockMount, () => {
 
 const pane = document.getElementById('todo-pane')!;
 const accountMount = document.getElementById('account-mount')!;
+const modalMount = document.getElementById('modal-mount')!;
 let todos: readonly Todo[] = loadTodos();
 let dailyGoal = loadDailyGoal();
 let sortMode = loadSortMode();
@@ -175,26 +180,47 @@ const sidebar = new TodoSidebar(
 );
 sidebar.render(todos);
 
+let authState: AuthState = { kind: 'disabled' };
+
+const accountModal = new AccountModal(modalMount, {
+  onChangePassword: (newPassword) => changePassword(newPassword),
+  onDeleteAccount: async () => {
+    await deleteAccount();
+    applyAuth(await logout());
+    await cloud.pullAndMerge('normal');
+  },
+  getSyncStatus: () => cloud.getStatus(),
+});
+
 const accountBar = new AccountBar(accountMount, {
   onUpgrade: async (email, password) => {
-    accountBar.setAuth(await upgradeAccount(email, password));
+    applyAuth(await upgradeAccount(email, password));
   },
   onLogin: async (email, password) => {
-    accountBar.setAuth(await login(email, password));
+    applyAuth(await login(email, password));
     await cloud.pullAndMerge('login');
   },
   onLogout: async () => {
-    accountBar.setAuth(await logout());
+    applyAuth(await logout());
     await cloud.pullAndMerge('normal');
   },
+  onOpenAccount: () => {
+    if (authState.kind === 'permanent') accountModal.open(authState.email);
+  },
 });
+
+/** Mémorise l'état d'auth courant et le propage à la barre compte. */
+function applyAuth(auth: AuthState): void {
+  authState = auth;
+  accountBar.setAuth(auth);
+}
 
 // Pousse l'état du jeu vers le cloud à chaque sauvegarde de WorldScene.
 setSaveListener((state) => cloud.pushGameState(state));
 
 // Sync initiale : session anonyme garantie, puis pull/merge.
 void (async () => {
-  accountBar.setAuth(await ensureSession());
+  applyAuth(await ensureSession());
   await cloud.pullAndMerge('normal');
 })();
 
