@@ -76,3 +76,22 @@ export async function requestPasswordReset(email: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email);
   if (error) throw error;
 }
+
+/** Change le mot de passe du compte connecté. */
+export async function changePassword(newPassword: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
+}
+
+/**
+ * Supprime définitivement le compte courant via l'edge function
+ * `delete-account`. Le cascade SQL supprime todos / game_states / preferences.
+ */
+export async function deleteAccount(): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.functions.invoke('delete-account', {
+    method: 'POST',
+  });
+  if (error) throw error;
+}
